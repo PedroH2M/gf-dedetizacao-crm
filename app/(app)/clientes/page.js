@@ -10,7 +10,7 @@ export default async function ClientesPage({ searchParams }) {
   const sp = await searchParams;
   const q = String(sp?.q ?? "").trim().slice(0, 80);
   const limite = Math.min(Math.max(Number(sp?.n) || PASSO, PASSO), 300);
-  const rows = listClientes(q, limite + 1);
+  const rows = await listClientes(q, limite + 1);
   const temMais = rows.length > limite;
   const clientes = rows.slice(0, limite);
 

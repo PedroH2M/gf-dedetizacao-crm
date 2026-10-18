@@ -12,7 +12,7 @@ export default async function DocList({ cfg, searchParams }) {
   const status = cfg.status.includes(sp?.status) ? sp.status : "";
   const limite = Math.min(Math.max(Number(sp?.n) || PASSO, PASSO), 300);
 
-  const docs = listDocs(cfg.table, { q, status, limit: limite + 1 });
+  const docs = await listDocs(cfg.table, { q, status, limit: limite + 1 });
   const temMais = docs.length > limite;
   const visiveis = docs.slice(0, limite);
 

@@ -9,7 +9,7 @@ import { getDoc } from "@/lib/queries";
 
 /** Documento A4 limpo (fundo branco) para imprimir / salvar em PDF. */
 export default async function PrintDoc({ cfg, id }) {
-  const doc = getDoc(cfg.table, Number(id));
+  const doc = await getDoc(cfg.table, Number(id));
   if (!doc) notFound();
   const isOrc = cfg.tipo === "orcamento";
 

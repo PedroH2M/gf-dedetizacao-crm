@@ -7,10 +7,10 @@ import { getDoc, listClientesBasico } from "@/lib/queries";
 
 /** Página de criação/edição de OS e Propostas. */
 export default async function DocFormPage({ cfg, id, searchParams }) {
-  const clientes = listClientesBasico();
+  const clientes = await listClientesBasico();
   let doc = null;
   if (id) {
-    doc = getDoc(cfg.table, Number(id));
+    doc = await getDoc(cfg.table, Number(id));
     if (!doc) notFound();
     doc = { ...doc, valor: valorInput(doc.valor) };
   }

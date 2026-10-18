@@ -46,7 +46,7 @@ export async function login(_prev, formData) {
     return { error: `Muitas tentativas. Tente novamente em ${min} min.`, values };
   }
 
-  const user = email ? one("SELECT id, senha_hash FROM usuarios WHERE email = ?", email) : null;
+  const user = email ? await one("SELECT id, senha_hash FROM usuarios WHERE email = ?", email) : null;
   // Sempre executa o scrypt (mesmo sem usuário) para igualar o tempo de resposta.
   const ok = verifyPassword(senha, user?.senha_hash ?? DUMMY_HASH) && !!user;
 
@@ -94,9 +94,9 @@ export async function saveCliente(_prev, fd) {
   if (digits(telefone).length < 10 || digits(telefone).length > 13)
     return { error: "Telefone inválido. Use DDD + número (ex.: 11 91234-5678).", values };
   if (email && !EMAIL_RE.test(email)) return { error: "E-mail inválido.", values };
-  if (id && !getCliente(id)) return { error: "Cliente não encontrado.", values };
+  if (id && !(await getCliente(id))) return { error: "Cliente não encontrado.", values };
 
-  const novoId = saveClienteDb({ id, nome, telefone, email, endereco, anotacoes });
+  const novoId = await saveClienteDb({ id, nome, telefone, email, endereco, anotacoes });
   revalidatePath("/", "layout");
   redirect(`/clientes/${novoId}`);
 }
@@ -104,8 +104,8 @@ export async function saveCliente(_prev, fd) {
 export async function deleteCliente(id) {
   await requireSession();
   id = Number(id);
-  if (countVinculos(id) > 0) redirect(`/clientes/${id}?erro=vinculos`);
-  deleteClienteDb(id);
+  if ((await countVinculos(id)) > 0) redirect(`/clientes/${id}?erro=vinculos`);
+  await deleteClienteDb(id);
   revalidatePath("/", "layout");
   redirect("/clientes");
 }
@@ -134,15 +134,15 @@ async function salvarDoc(tipo, fd) {
   const validade = campo(fd, "validade", 10);
 
   const erro = (error) => ({ error, values });
-  if (!cliente_id || !getCliente(cliente_id)) return erro("Selecione o cliente.");
+  if (!cliente_id || !(await getCliente(cliente_id))) return erro("Selecione o cliente.");
   if (!isISODate(data)) return erro("Informe uma data válida.");
   if (servico.length < 2) return erro("Informe o serviço.");
   if (valor === null || valor < 0 || valor > 10_000_000) return erro("Valor inválido.");
   if (!cfg.status.includes(status)) return erro("Status inválido.");
   if (tipo === "orcamento" && !isISODate(validade)) return erro("Informe a validade da proposta.");
-  if (id && !getDoc(cfg.table, id)) return erro("Registro não encontrado.");
+  if (id && !(await getDoc(cfg.table, id))) return erro("Registro não encontrado.");
 
-  const novoId = saveDocDb(cfg.table, {
+  const novoId = await saveDocDb(cfg.table, {
     id, cliente_id, data, servico, produtos, valor, status, observacoes,
     metodologia: tipo === "orcamento" ? metodologia : null,
     validade: tipo === "orcamento" ? validade : null,
@@ -158,7 +158,7 @@ export async function setStatus(tipo, id, status) {
   await requireSession();
   const cfg = DOCS[tipo];
   if (!cfg || !cfg.status.includes(status)) return;
-  setStatusDb(cfg.table, Number(id), status);
+  await setStatusDb(cfg.table, Number(id), status);
   revalidatePath("/", "layout");
 }
 
@@ -166,7 +166,7 @@ export async function deleteDoc(tipo, id) {
   await requireSession();
   const cfg = DOCS[tipo];
   if (!cfg) return;
-  deleteDocDb(cfg.table, Number(id));
+  await deleteDocDb(cfg.table, Number(id));
   revalidatePath("/", "layout");
   redirect(`/${cfg.rota}`);
 }
@@ -174,9 +174,9 @@ export async function deleteDoc(tipo, id) {
 /** Cria uma OS a partir de uma proposta e marca a proposta como Aprovada. */
 export async function converterOrcamento(id) {
   await requireSession();
-  const o = getDoc(DOCS.orcamento.table, Number(id));
+  const o = await getDoc(DOCS.orcamento.table, Number(id));
   if (!o) redirect("/orcamentos");
-  const osId = saveDocDb(DOCS.os.table, {
+  const osId = await saveDocDb(DOCS.os.table, {
     id: 0,
     cliente_id: o.cliente_id,
     data: hojeISO(),
@@ -186,7 +186,7 @@ export async function converterOrcamento(id) {
     status: "Agendada",
     observacoes: `Gerada a partir da Proposta nº ${String(o.id).padStart(4, "0")}.`,
   });
-  setStatusDb(DOCS.orcamento.table, o.id, "Aprovado");
+  await setStatusDb(DOCS.orcamento.table, o.id, "Aprovado");
   revalidatePath("/", "layout");
   redirect(`/os/${osId}/editar`);
 }
@@ -217,7 +217,7 @@ export async function salvarAssinaturaOS(osId, formData) {
     minute: "2-digit",
   });
 
-  saveAssinaturaOSDb(id, { imagem, nome, documento, em });
+  await saveAssinaturaOSDb(id, { imagem, nome, documento, em });
   revalidatePath("/", "layout");
   return { success: true };
 }
@@ -227,7 +227,7 @@ export async function removerAssinaturaOS(osId) {
   const id = Number(osId);
   if (!id) return;
 
-  removerAssinaturaOSDb(id);
+  await removerAssinaturaOSDb(id);
   revalidatePath("/", "layout");
 }
 

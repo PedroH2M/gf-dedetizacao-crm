@@ -20,7 +20,7 @@ function Linha({ label, children }) {
 }
 
 export default async function DocDetail({ cfg, id }) {
-  const doc = getDoc(cfg.table, Number(id));
+  const doc = await getDoc(cfg.table, Number(id));
   if (!doc) notFound();
 
   const texto = resumoTexto(cfg.tipo, doc);

@@ -7,10 +7,10 @@ import { getStats, orcamentosAbertos, proximosServicos } from "@/lib/queries";
 
 export const metadata = { title: "Início" };
 
-export default function Dashboard() {
-  const s = getStats();
-  const proximos = proximosServicos(4);
-  const orcs = orcamentosAbertos(3);
+export default async function Dashboard() {
+  const s = await getStats();
+  const proximos = await proximosServicos(4);
+  const orcs = await orcamentosAbertos(3);
 
   return (
     <div className="fade-in">

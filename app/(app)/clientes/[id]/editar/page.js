@@ -8,7 +8,7 @@ export const metadata = { title: "Editar cliente" };
 
 export default async function EditarClientePage({ params }) {
   const { id } = await params;
-  const cliente = getCliente(Number(id));
+  const cliente = await getCliente(Number(id));
   if (!cliente) notFound();
   return (
     <div className="fade-in">

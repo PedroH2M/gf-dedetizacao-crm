@@ -10,7 +10,7 @@ import { deleteCliente } from "@/app/actions";
 
 export async function generateMetadata({ params }) {
   const { id } = await params;
-  const c = getCliente(Number(id));
+  const c = await getCliente(Number(id));
   return { title: c?.nome ?? "Cliente" };
 }
 
@@ -27,11 +27,11 @@ function Info({ label, children }) {
 export default async function ClientePage({ params, searchParams }) {
   const { id } = await params;
   const sp = await searchParams;
-  const cliente = getCliente(Number(id));
+  const cliente = await getCliente(Number(id));
   if (!cliente) notFound();
 
-  const oss = listDocsByCliente(DOCS.os.table, cliente.id);
-  const orcs = listDocsByCliente(DOCS.orcamento.table, cliente.id);
+  const oss = await listDocsByCliente(DOCS.os.table, cliente.id);
+  const orcs = await listDocsByCliente(DOCS.orcamento.table, cliente.id);
   const wa = waNumber(cliente.telefone);
 
   return (
