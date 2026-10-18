@@ -8,8 +8,10 @@ import { brl, dataBR, numero } from "@/lib/format";
 import { getDoc } from "@/lib/queries";
 
 /** Documento A4 limpo (fundo branco) para imprimir / salvar em PDF. */
-export default async function PrintDoc({ cfg, id }) {
-  const doc = await getDoc(cfg.table, Number(id));
+export default async function PrintDoc({ cfg, id, isPublic = false }) {
+  const numId = Number(id);
+  if (!Number.isFinite(numId) || numId <= 0) notFound();
+  const doc = await getDoc(cfg.table, numId);
   if (!doc) notFound();
   const isOrc = cfg.tipo === "orcamento";
 
@@ -25,16 +27,50 @@ export default async function PrintDoc({ cfg, id }) {
 
   return (
     <div className="sheet">
-      <div className="no-print sticky top-0 z-10 flex items-center justify-between gap-3 border-b border-neutral-300 bg-white p-3">
-        <Link href={`/${cfg.rota}/${doc.id}`} className="btn btn-sm" style={{ background: "#eee", color: "#111" }}>
-          <Icon name="back" size={18} /> Voltar
-        </Link>
+      <div className="no-print sticky top-0 z-10 flex items-center justify-between gap-3 border-b border-neutral-300 bg-white p-3 shadow-sm">
+        {isPublic ? (
+          <a
+            href={BRAND.whatsappUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex min-h-10 items-center gap-2 rounded-lg bg-[#25D366] px-3.5 py-1.5 text-sm font-black text-white hover:brightness-105"
+          >
+            <Icon name="whatsapp" size={18} /> Falar no WhatsApp ({BRAND.telefone})
+          </a>
+        ) : (
+          <Link href={`/${cfg.rota}/${doc.id}`} className="btn btn-sm" style={{ background: "#eee", color: "#111" }}>
+            <Icon name="back" size={18} /> Voltar
+          </Link>
+        )}
         <PrintButton />
       </div>
 
       <article className="doc">
         <header className="doc-head">
-          <Logo print size={46} />
+          <div style={{ display: "flex", alignItems: "center", gap: "14px" }}>
+            <img
+              src="/logo.png"
+              alt="GF Dedetização"
+              style={{
+                height: "64px",
+                width: "auto",
+                maxHeight: "64px",
+                objectFit: "contain",
+                display: "block",
+              }}
+            />
+            <div>
+              <p style={{ margin: 0, fontSize: "1.15rem", fontWeight: "900", color: "#111", letterSpacing: "0.5px" }}>
+                GF DEDETIZAÇÃO
+              </p>
+              <p style={{ margin: "2px 0 0 0", fontSize: "0.85rem", color: "#111", fontWeight: "700" }}>
+                Contato / WhatsApp: {BRAND.telefone}
+              </p>
+              <p style={{ margin: "1px 0 0 0", fontSize: "0.75rem", color: "#555" }}>
+                Instagram: @{BRAND.instagram}
+              </p>
+            </div>
+          </div>
           <div className="text-right">
             <p className="text-xs font-bold uppercase tracking-widest text-neutral-500">{cfg.rotulo}</p>
             <p className="text-2xl font-black">Nº {numero(doc.id)}</p>
@@ -109,7 +145,7 @@ export default async function PrintDoc({ cfg, id }) {
           <br />
           {BRAND.slogan2}
           <br />
-          Instagram: @{BRAND.instagram}
+          Central de Atendimento: <strong>{BRAND.telefone}</strong> • Instagram: @{BRAND.instagram}
         </footer>
       </article>
     </div>

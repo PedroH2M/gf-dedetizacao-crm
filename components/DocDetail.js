@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import Icon from "./Icon";
 import DeleteButton from "./DeleteButton";
 import AssinaturaModal from "./AssinaturaModal";
+import EnvioBotoes from "./EnvioBotoes";
 import { BADGE } from "@/lib/constants";
 import { brl, dataBR, hojeISO, numero } from "@/lib/format";
 import { mailtoUrl, resumoTexto, whatsappUrl } from "@/lib/share";
@@ -20,7 +21,9 @@ function Linha({ label, children }) {
 }
 
 export default async function DocDetail({ cfg, id }) {
-  const doc = await getDoc(cfg.table, Number(id));
+  const numId = Number(id);
+  if (!Number.isFinite(numId) || numId <= 0) notFound();
+  const doc = await getDoc(cfg.table, numId);
   if (!doc) notFound();
 
   const texto = resumoTexto(cfg.tipo, doc);
@@ -39,23 +42,16 @@ export default async function DocDetail({ cfg, id }) {
         <span className={`badge ${BADGE[doc.status] || ""}`}>{doc.status}</span>
       </div>
 
-      {/* Ações rápidas */}
-      <div className="grid grid-cols-3 gap-2.5">
-        <a id="btn-whatsapp" href={whatsappUrl(doc, texto)} target="_blank" rel="noopener noreferrer"
-          className="btn btn-primary !flex-col !gap-1.5 !px-2 !py-3 !text-sm">
-          <Icon name="whatsapp" size={24} /> WhatsApp
-        </a>
-        <a id="btn-email" href={mailtoUrl(cfg.tipo, doc, textoEmail)}
-          className="btn btn-outline !flex-col !gap-1.5 !px-2 !py-3 !text-sm">
-          <Icon name="mail" size={24} /> E-mail
-        </a>
-        <Link id="btn-pdf" href={`/${cfg.rota}/${doc.id}/imprimir`}
-          className="btn btn-outline !flex-col !gap-1.5 !px-2 !py-3 !text-sm">
-          <Icon name="printer" size={24} /> Imprimir
-        </Link>
-      </div>
+      {/* Ações rápidas e envio automático */}
+      <EnvioBotoes
+        tipo={cfg.tipo}
+        doc={doc}
+        whatsappFallbackUrl={whatsappUrl(doc, texto)}
+        emailFallbackUrl={mailtoUrl(cfg.tipo, doc, textoEmail)}
+        printUrl={`/${cfg.rota}/${doc.id}/imprimir`}
+      />
       {!doc.cliente_telefone && (
-        <p className="text-xs text-muted">Cliente sem telefone: o WhatsApp abrirá para você escolher o contato.</p>
+        <p className="text-xs text-muted">Cliente sem telefone cadastrado.</p>
       )}
 
       <section className="card">

@@ -21,6 +21,9 @@ import {
   saveDocDb,
   setStatusDb,
 } from "@/lib/queries";
+import { dispatchWhatsApp } from "@/lib/whatsapp-api";
+import { dispatchEmail } from "@/lib/email-api";
+import { resumoTexto } from "@/lib/share";
 
 // ---------------------------------------------------------------- Autenticação
 
@@ -232,5 +235,63 @@ export async function removerAssinaturaOS(osId) {
 
   await removerAssinaturaOSDb(id);
   revalidatePath("/", "layout");
+}
+
+// ---------------------------------------------------- Envios Automáticos (WhatsApp & E-mail)
+
+export async function enviarWhatsAppAutomatico(tipo, id) {
+  await requireSession();
+  const cfg = DOCS[tipo];
+  if (!cfg) return { ok: false, error: "Tipo de documento inválido." };
+  const numId = Number(id);
+  const doc = await getDoc(cfg.table, numId);
+  if (!doc) return { ok: false, error: "Documento não encontrado." };
+  if (!doc.cliente_telefone) return { ok: false, error: "Cliente não possui telefone cadastrado." };
+
+  const h = await headers();
+  const host = h.get("host") || "localhost:3000";
+  const proto = h.get("x-forwarded-proto") || (host.includes("localhost") ? "http" : "https");
+  const urlBase = `${proto}://${host}`;
+  const pdfUrl = `${urlBase}/documento/${tipo}/${doc.id}`;
+  const logoUrl = `${urlBase}/logo.png`;
+
+  const texto = resumoTexto(tipo, doc, { negrito: true, urlBase });
+
+  const res = await dispatchWhatsApp({
+    telefone: doc.cliente_telefone,
+    texto,
+    mediaUrl: logoUrl,
+    fileName: `logo_gf_dedetizacao.png`,
+  });
+
+  return res;
+}
+
+export async function enviarEmailAutomatico(tipo, id) {
+  await requireSession();
+  const cfg = DOCS[tipo];
+  if (!cfg) return { ok: false, error: "Tipo de documento inválido." };
+  const numId = Number(id);
+  const doc = await getDoc(cfg.table, numId);
+  if (!doc) return { ok: false, error: "Documento não encontrado." };
+  if (!doc.cliente_email) return { ok: false, error: "Cliente não possui e-mail cadastrado." };
+
+  const h = await headers();
+  const host = h.get("host") || "localhost:3000";
+  const proto = h.get("x-forwarded-proto") || (host.includes("localhost") ? "http" : "https");
+  const urlBase = `${proto}://${host}`;
+  const pdfUrl = `${urlBase}/documento/${tipo}/${doc.id}`;
+  const logoUrl = `${urlBase}/logo.png`;
+
+  const res = await dispatchEmail({
+    destinatario: doc.cliente_email,
+    nomeCliente: doc.cliente_nome,
+    tipo,
+    doc,
+    pdfUrl,
+    logoUrl,
+  });
+
+  return res;
 }
 

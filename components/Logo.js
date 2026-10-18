@@ -1,17 +1,25 @@
-export default function Logo({ size = 40, print = false, showText = true }) {
-  const stroke = print ? "#1a9e0f" : "#39ff14";
+export default function Logo({ size = 44, print = false, showText = false, className = "" }) {
   return (
-    <span className="inline-flex items-center gap-2.5">
-      <svg width={size} height={size} viewBox="0 0 512 512" aria-hidden="true">
-        <path d="M256 60 100 120v122c0 100 65 172 156 202 91-30 156-102 156-202V120z" fill="none" stroke={stroke} strokeWidth="30" strokeLinejoin="round" />
-        <path d="m184 262 54 54 94-108" fill="none" stroke={stroke} strokeWidth="34" strokeLinecap="round" strokeLinejoin="round" />
-      </svg>
+    <span className={`inline-flex items-center gap-2.5 ${className}`}>
+      <img
+        src="/logo.png"
+        alt="GF Dedetização"
+        style={{
+          height: `${size}px`,
+          width: "auto",
+          maxHeight: `${size}px`,
+          maxWidth: `${size * 2.5}px`,
+          objectFit: "contain",
+          borderRadius: print ? "4px" : "6px",
+          display: "inline-block",
+        }}
+      />
       {showText && (
         <span className="flex flex-col leading-none">
-          <span className="text-xl font-black tracking-tight">
-            GF<span style={{ color: stroke }}>.</span>
+          <span className="text-lg font-black tracking-tight text-white">
+            GF<span className="text-brand-green">.</span>
           </span>
-          <span className="mt-0.5 text-[.6rem] font-bold tracking-[.22em] opacity-80">DEDETIZAÇÃO</span>
+          <span className="mt-0.5 text-[.6rem] font-bold tracking-[.22em] text-neutral-400">DEDETIZAÇÃO</span>
         </span>
       )}
     </span>

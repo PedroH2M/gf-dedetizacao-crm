@@ -1,8 +1,8 @@
 # GF Dedetização • CRM
 
-> **O fim das pragas. A sua paz.** — @gfdedetiza
+> **O fim das pragas. A sua paz.** — Contato: **(83) 98806-9060** • @gfdedetiza
 
-CRM mobile-first completo (Next.js 16 + Tailwind v4 + Turso/libSQL/SQLite) desenvolvido sob medida para a **GF Dedetização**, com gestão de clientes, Ordens de Serviço (com assinatura digital na tela), Propostas Comerciais, integração com WhatsApp e impressão/PDF.
+CRM mobile-first completo (Next.js 16 + Tailwind v4 + Turso/libSQL/SQLite) desenvolvido sob medida para a **GF Dedetização**, com gestão de clientes, Ordens de Serviço (com assinatura digital na tela), Propostas Comerciais, envio automático via WhatsApp & E-mail e impressão/PDF com o logotipo oficial.
 
 ---
 
@@ -50,17 +50,27 @@ Em menos de 1 minuto, seu CRM estará no ar com link seguro (ex: `https://gf-ded
 
 ## 📱 Funcionalidades Principais
 
-- **Mobile-First & PWA:** Interface desenhada no tema Dark `#121212` com acento neon verde `#39ff14`, áreas de toque amplas (≥ 44px) e navegação inferior ágil.
+- **Logotipo Oficial e Identidade Visual:** Logomarca oficial da GF Dedetização no tema Dark `#121212` com acento neon `#39ff14`, presente em todo o sistema e nas vias impressas/PDF.
 - **Assinatura Digital de OS:** Cliente assina diretamente na tela do celular com o dedo; a assinatura com data/hora e documento é salva e impressa na OS e no laudo PDF.
-- **WhatsApp Direto:** Envio de resumo formal com link direto para o cliente com um clique (`wa.me`).
-- **Conversão Automática:** Transforma qualquer proposta comercial aprovada em Ordem de Serviço com um toque.
-- **Impressão A4 & PDF:** Folha limpa em fundo branco formatada para exportação em PDF e arquivamento físico/digital.
+- **Envio Automático via WhatsApp (Sem abrir o app):** Integração com Gateway REST (Evolution API / Z-API) que envia a mensagem, o logotipo e o link do laudo/proposta em PDF direto para o WhatsApp do cliente sem intervenção manual.
+- **Disparo de E-mail No-Reply Automático:** Envio automático via Resend com modelo HTML profissional, logotipo incorporado e botão para o cliente acessar e baixar a proposta em PDF.
+- **Link Público de Proposta:** Rota segura (`/documento/orcamento/[id]` ou `/proposta/[id]`) para o cliente visualizar e imprimir sua proposta comercial mesmo sem ter login no CRM.
+- **Central de Atendimento:** Número oficial **(83) 98806-9060** em todos os cabeçalhos, rodapés e laudos gerados.
 
 ---
 
-## 🔒 Segurança
+## ⚙️ Variáveis de Ambiente para Envios Automáticos (Opcional)
 
-- Senha criptografada com algoritmo moderno `scrypt`.
-- Sessão em cookie `HttpOnly` assinado via HMAC-SHA256 (7 dias de validade).
-- Proteção contra força bruta (máximo de 5 tentativas a cada 15 min por IP/e-mail).
-- Consultas SQL 100% parametrizadas contra injeção de código.
+Para habilitar os disparos automáticos em segundo plano:
+
+```env
+# WhatsApp Gateway (Evolution API, Z-API ou compatível)
+WHATSAPP_API_URL=https://sua-api-whatsapp.com
+WHATSAPP_API_KEY=seu-token-da-instancia
+WHATSAPP_INSTANCE=gfdedetizacao
+
+# E-mail No-Reply (Resend.com - 3.000 e-mails grátis/mês)
+RESEND_API_KEY=re_123456...
+EMAIL_FROM="GF Dedetização <onboarding@resend.dev>"
+```
+*Caso não configure essas chaves, o sistema continuará oferecendo o envio com 1 clique via WhatsApp Web (`wa.me`) e cliente padrão de e-mail como alternativa.*

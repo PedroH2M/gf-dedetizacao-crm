@@ -15,12 +15,9 @@ export default function LoginPage() {
       }}
     >
       <div className="mx-auto w-full max-w-sm">
-        <div className="mb-8 flex flex-col items-center text-center">
-          <Logo size={72} showText={false} />
-          <p className="mt-3 text-3xl font-black tracking-tight">
-            GF<span className="text-brand-green">.</span> Dedetização
-          </p>
-          <h1 className="mt-6 text-[1.9rem] font-black leading-tight tracking-tight">
+        <div className="mb-6 flex flex-col items-center text-center">
+          <Logo size={96} showText={false} />
+          <h1 className="mt-5 text-[1.85rem] font-black leading-tight tracking-tight">
             O fim das pragas.
             <br />
             A sua <span className="glow-text">paz.</span>
