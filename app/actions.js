@@ -36,7 +36,7 @@ async function chaveTentativa(email) {
 
 export async function login(_prev, formData) {
   const email = String(formData.get("email") || "").trim().toLowerCase();
-  const senha = String(formData.get("senha") || "");
+  const senha = String(formData.get("senha") || "").trim();
   const values = { email };
 
   const chave = await chaveTentativa(email);
@@ -58,10 +58,13 @@ export async function login(_prev, formData) {
   }
 
   tentativas.delete(chave);
+  const h = await headers();
+  const isHttps = h.get("x-forwarded-proto") === "https" || process.env.COOKIE_SECURE === "true";
+
   (await cookies()).set(COOKIE_NAME, createToken(user.id), {
     httpOnly: true,
     sameSite: "lax",
-    secure: process.env.COOKIE_SECURE === "true",
+    secure: isHttps,
     path: "/",
     maxAge: SESSION_MAX_AGE,
   });
