@@ -61,6 +61,8 @@ export default function EnvioBotoes({
             type: "success",
             text: `✓ E-mail no-reply com a proposta em PDF e logotipo enviado para ${doc.cliente_email}!`,
           });
+        } else if (res.needsDomain) {
+          setModalApi("email_domain");
         } else if (res.unconfigured) {
           setModalApi("email");
         } else {
@@ -269,6 +271,68 @@ export default function EnvioBotoes({
                 className="btn btn-outline w-full text-center"
               >
                 Fechar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal de Domínio Resend / Alternativa SMTP Gmail */}
+      {modalApi === "email_domain" && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4 backdrop-blur-sm">
+          <div className="card w-full max-w-md border-amber-500/30 !p-5 shadow-2xl">
+            <div className="flex items-center justify-between border-b border-line pb-3">
+              <div className="flex items-center gap-2 text-amber-400">
+                <Icon name="mail" size={22} />
+                <h3 className="text-base font-black">Envio de E-mail para Terceiros</h3>
+              </div>
+              <button
+                type="button"
+                onClick={() => setModalApi(null)}
+                className="text-muted hover:text-white"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="mt-3 space-y-3 text-sm text-neutral-300">
+              <p>
+                O <strong>Resend</strong> no plano de testes gratuito exige a verificação de um domínio próprio (ex: <code className="text-brand-green">@gfdedetizacao.com.br</code>) para disparar para terceiros.
+              </p>
+
+              <div className="rounded-lg bg-black/50 p-3 text-xs space-y-2 border border-line">
+                <p className="font-bold text-white">Opção 1: Usar Gmail / SMTP (100% Grátis sem domínio):</p>
+                <p className="text-muted">
+                  Basta configurar na Vercel as variáveis de uma conta Gmail:
+                </p>
+                <ul className="list-inside list-disc text-neutral-300 space-y-0.5">
+                  <li><code>SMTP_USER=seu_email@gmail.com</code></li>
+                  <li><code>SMTP_PASS=sua_senha_de_app_google</code></li>
+                </ul>
+              </div>
+
+              <div className="rounded-lg bg-black/50 p-3 text-xs space-y-1 border border-line">
+                <p className="font-bold text-white">Opção 2: Verificar Domínio no Resend:</p>
+                <p className="text-muted">
+                  Se você tiver um domínio registrado, adicione em <a href="https://resend.com/domains" target="_blank" className="text-brand-green underline">resend.com/domains</a>.
+                </p>
+              </div>
+            </div>
+
+            <div className="mt-4 flex flex-col gap-2">
+              <a
+                href={emailFallbackUrl}
+                onClick={() => setModalApi(null)}
+                className="btn btn-primary w-full text-center font-bold"
+              >
+                <Icon name="mail" size={18} /> Enviar Agora pelo Meu E-mail (Manual)
+              </a>
+              <button
+                type="button"
+                onClick={() => setModalApi(null)}
+                className="btn btn-outline w-full text-center"
+              >
+                Entendi
               </button>
             </div>
           </div>
