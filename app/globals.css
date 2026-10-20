@@ -186,24 +186,50 @@ input[type="date"].input { min-height: 3.25rem; }
 @keyframes fade { from { opacity: 0; transform: translateY(6px); } }
 @media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
 
-/* ===== Documento para impressão / PDF ===== */
-.sheet { min-height: 100dvh; background: #fff; color: #111; }
-.sheet .doc { max-width: 50rem; margin: 0 auto; padding: 1.25rem; }
-.doc-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem; border-bottom: 4px solid #1a9e0f; padding-bottom: 1rem; }
-.doc h2 { font-size: .75rem; letter-spacing: .12em; text-transform: uppercase; color: #1a7a10; margin: 1.25rem 0 .4rem; font-weight: 800; }
-.doc table { width: 100%; border-collapse: collapse; }
-.doc th, .doc td { text-align: left; padding: .55rem .6rem; border-bottom: 1px solid #ddd; vertical-align: top; font-size: .95rem; }
-.doc th { width: 34%; color: #555; font-weight: 700; }
-.doc .total { font-size: 1.4rem; font-weight: 900; color: #0d6a05; }
-.doc-sign { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin-top: 3rem; text-align: center; font-size: .85rem; }
-.doc-sign-col { display: flex; flex-direction: column; justify-content: flex-end; }
-.doc-sign-line { border-top: 1px solid #111; padding-top: .35rem; }
-.doc-foot { margin-top: 2rem; text-align: center; font-size: .8rem; color: #444; border-top: 1px solid #ddd; padding-top: .8rem; }
+/* ===== Documento para impressão / PDF (Estilo Proposta GF) ===== */
+.sheet { min-height: 100dvh; }
+.proposta-banner {
+  -webkit-print-color-adjust: exact !important;
+  print-color-adjust: exact !important;
+}
+.proposta-container {
+  -webkit-print-color-adjust: exact !important;
+  print-color-adjust: exact !important;
+}
 
-@page { margin: 12mm; }
+@page {
+  size: A4 portrait;
+  margin: 8mm;
+}
+
 @media print {
-  html, body { background: #fff !important; }
-  .no-print { display: none !important; }
-  .sheet .doc { padding: 0; max-width: none; }
-  .doc-head { border-bottom-color: #1a9e0f; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  html, body {
+    background: #fff !important;
+    color: #111827 !important;
+  }
+  .no-print {
+    display: none !important;
+  }
+  .sheet {
+    background: #fff !important;
+    min-height: auto !important;
+  }
+  .sheet > div {
+    margin: 0 !important;
+    padding: 0 !important;
+    max-width: none !important;
+    box-shadow: none !important;
+  }
+  .proposta-banner {
+    background-color: #1e2420 !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+  th {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+  tr, td {
+    page-break-inside: avoid;
+  }
 }
