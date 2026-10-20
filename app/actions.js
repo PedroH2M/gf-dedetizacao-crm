@@ -276,10 +276,15 @@ export async function enviarEmailAutomatico(tipo, id) {
   if (!doc) return { ok: false, error: "Documento não encontrado." };
   if (!doc.cliente_email) return { ok: false, error: "Cliente não possui e-mail cadastrado." };
 
+  const envUrl = (process.env.APP_URL || "").trim().replace(/\/+$/, "") ||
+    (process.env.VERCEL_PROJECT_PRODUCTION_URL ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}` : "") ||
+    (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "");
+
   const h = await headers();
   const host = h.get("host") || "localhost:3000";
   const proto = h.get("x-forwarded-proto") || (host.includes("localhost") ? "http" : "https");
-  const urlBase = `${proto}://${host}`;
+  const requestUrlBase = `${proto}://${host}`;
+  const urlBase = host.includes("localhost") && envUrl ? envUrl : requestUrlBase;
   const pdfUrl = `${urlBase}/documento/${tipo}/${doc.id}`;
   const logoUrl = `${urlBase}/logo.png`;
 
