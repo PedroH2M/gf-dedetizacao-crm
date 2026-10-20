@@ -2,12 +2,34 @@
 
 import { useState, useRef, useEffect } from "react";
 import Icon from "./Icon";
-import { salvarAssinaturaOS, removerAssinaturaOS } from "@/app/actions";
+import {
+  salvarAssinaturaDoc,
+  removerAssinaturaDoc,
+  salvarAssinaturaGF,
+  removerAssinaturaGF,
+  salvarAssinaturaPublica,
+} from "@/app/actions";
 
-export default function AssinaturaModal({ osId, clienteNome, assinaturaAtual }) {
+export default function AssinaturaModal({
+  tipo = "os",
+  docId,
+  osId, // compatibilidade
+  alvo = "cliente", // "cliente" ou "gf"
+  clienteNome,
+  assinaturaAtual,
+  isPublic = false,
+}) {
+  const idReal = docId || osId;
+  const isGF = alvo === "gf";
+
   const [aberto, setAberto] = useState(false);
-  const [nome, setNome] = useState(clienteNome || "");
-  const [documento, setDocumento] = useState("");
+  const [nome, setNome] = useState(
+    isGF
+      ? (assinaturaAtual?.nome || "GF Dedetização - Técnico Responsável")
+      : (assinaturaAtual?.nome || clienteNome || "")
+  );
+  const [documento, setDocumento] = useState(assinaturaAtual?.documento || "");
+  const [salvarPadrao, setSalvarPadrao] = useState(true);
   const [desenhando, setDesenhando] = useState(false);
   const [temTraco, setTemTraco] = useState(false);
   const [salvando, setSalvando] = useState(false);
@@ -26,13 +48,11 @@ export default function AssinaturaModal({ osId, clienteNome, assinaturaAtual }) 
     const ctx = canvas.getContext("2d");
     const rect = canvas.getBoundingClientRect();
 
-    // Suporte a telas de alta resolução (Retina / Mobile)
     const dpr = window.devicePixelRatio || 1;
     canvas.width = rect.width * dpr;
     canvas.height = rect.height * dpr;
     ctx.scale(dpr, dpr);
 
-    // Configurações do traço de caneta
     ctx.strokeStyle = "#111111";
     ctx.lineWidth = 2.5;
     ctx.lineCap = "round";
@@ -103,7 +123,7 @@ export default function AssinaturaModal({ osId, clienteNome, assinaturaAtual }) 
       return;
     }
     if (!nome.trim()) {
-      setErro("Informe o nome de quem está assinando.");
+      setErro("Informe o nome do responsável pela assinatura.");
       return;
     }
 
@@ -118,9 +138,21 @@ export default function AssinaturaModal({ osId, clienteNome, assinaturaAtual }) 
       const fd = new FormData();
       fd.append("imagem", dataUrl);
       fd.append("nome", nome.trim());
-      fd.append("documento", documento.trim());
+      if (!isGF) {
+        fd.append("documento", documento.trim());
+      } else {
+        if (salvarPadrao) fd.append("salvarPadrao", "true");
+      }
 
-      const res = await salvarAssinaturaOS(osId, fd);
+      let res;
+      if (isPublic) {
+        res = await salvarAssinaturaPublica(tipo, idReal, fd);
+      } else if (isGF) {
+        res = await salvarAssinaturaGF(tipo, idReal, fd);
+      } else {
+        res = await salvarAssinaturaDoc(tipo, idReal, fd);
+      }
+
       if (res?.error) {
         setErro(res.error);
         setSalvando(false);
@@ -135,14 +167,27 @@ export default function AssinaturaModal({ osId, clienteNome, assinaturaAtual }) 
   }
 
   async function handleRemover() {
-    if (!window.confirm("Deseja remover a assinatura digital desta OS?")) return;
+    const msg = isGF
+      ? "Deseja remover a assinatura da GF Dedetização deste documento?"
+      : "Deseja remover a assinatura digital do cliente?";
+    if (!window.confirm(msg)) return;
+
     setSalvando(true);
     try {
-      await removerAssinaturaOS(osId);
+      if (isGF) {
+        await removerAssinaturaGF(tipo, idReal);
+      } else {
+        await removerAssinaturaDoc(tipo, idReal);
+      }
     } finally {
       setSalvando(false);
     }
   }
+
+  const tituloCard = isGF ? "Assinatura GF Dedetização" : "Assinatura do Cliente";
+  const descCard = isGF
+    ? "Assinatura do Responsável Técnico / Emissor da GF Dedetização na proposta e OS."
+    : "Colete a assinatura digital do cliente na tela do celular.";
 
   return (
     <>
@@ -155,48 +200,51 @@ export default function AssinaturaModal({ osId, clienteNome, assinaturaAtual }) 
                 <Icon name="check" size={14} />
               </span>
               <p className="text-xs font-black uppercase tracking-wider text-brand-green">
-                Assinado Digitalmente
+                {isGF ? "Assinado pela GF Dedetização" : "Assinado Digitalmente"}
               </p>
             </div>
-            <span className="text-xs font-medium text-muted">{assinaturaAtual.em}</span>
+            {assinaturaAtual.em && (
+              <span className="text-xs font-medium text-muted">{assinaturaAtual.em}</span>
+            )}
           </div>
 
-          {/* Imagem da assinatura em fundo branco com bordas arredondadas */}
-          <div className="flex min-h-[90px] items-center justify-center rounded-xl bg-white p-3 shadow-inner">
+          <div className="flex min-h-[85px] items-center justify-center rounded-xl bg-white p-3 shadow-inner">
             <img
               src={assinaturaAtual.imagem}
               alt={`Assinatura de ${assinaturaAtual.nome}`}
-              className="max-h-24 w-auto object-contain select-none"
+              className="max-h-20 w-auto object-contain select-none"
             />
           </div>
 
           <div className="flex items-end justify-between pt-1">
             <div className="min-w-0 pr-2">
-              <p className="label !mb-0.5">Assinado por</p>
+              <p className="label !mb-0.5">{isGF ? "Responsável Técnico" : "Assinado por"}</p>
               <p className="truncate text-base font-bold text-white">{assinaturaAtual.nome}</p>
               {assinaturaAtual.documento && (
                 <p className="text-xs text-muted">Doc: {assinaturaAtual.documento}</p>
               )}
             </div>
-            <div className="flex gap-2">
-              <button
-                type="button"
-                onClick={() => setAberto(true)}
-                className="btn btn-ghost btn-sm !px-2.5 !text-xs font-bold"
-                title="Refazer assinatura"
-              >
-                <Icon name="pen" size={15} /> Refazer
-              </button>
-              <button
-                type="button"
-                onClick={handleRemover}
-                disabled={salvando}
-                className="btn btn-danger btn-sm !px-2.5 !text-xs font-bold"
-                title="Excluir assinatura"
-              >
-                <Icon name="trash" size={15} />
-              </button>
-            </div>
+            {!isPublic && (
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => setAberto(true)}
+                  className="btn btn-ghost btn-sm !px-2.5 !text-xs font-bold"
+                  title="Refazer assinatura"
+                >
+                  <Icon name="pen" size={15} /> Refazer
+                </button>
+                <button
+                  type="button"
+                  onClick={handleRemover}
+                  disabled={salvando}
+                  className="btn btn-danger btn-sm !px-2.5 !text-xs font-bold"
+                  title="Excluir assinatura"
+                >
+                  <Icon name="trash" size={15} />
+                </button>
+              </div>
+            )}
           </div>
         </div>
       ) : (
@@ -207,18 +255,18 @@ export default function AssinaturaModal({ osId, clienteNome, assinaturaAtual }) 
               <Icon name="pen" size={24} />
             </span>
             <div className="min-w-0 flex-1">
-              <h2 className="text-base font-bold text-white">Assinatura do Cliente</h2>
-              <p className="text-xs text-muted">Colete a assinatura digital do cliente na tela do celular.</p>
+              <h2 className="text-base font-bold text-white">{tituloCard}</h2>
+              <p className="text-xs text-muted">{descCard}</p>
             </div>
           </div>
 
           <button
-            id="btn-coletar-assinatura"
             type="button"
             onClick={() => setAberto(true)}
             className="btn btn-primary btn-block"
           >
-            <Icon name="pen" size={18} /> Coletar Assinatura Agora
+            <Icon name="pen" size={18} />{" "}
+            {isGF ? "Inserir Assinatura da GF Dedetização" : "Coletar Assinatura do Cliente"}
           </button>
         </div>
       )}
@@ -237,8 +285,14 @@ export default function AssinaturaModal({ osId, clienteNome, assinaturaAtual }) 
                   <Icon name="pen" size={18} />
                 </span>
                 <div>
-                  <h2 className="text-lg font-black text-white">Assinatura Digital</h2>
-                  <p className="text-xs text-muted">Peça para o cliente assinar com o dedo abaixo</p>
+                  <h2 className="text-lg font-black text-white">
+                    {isGF ? "Assinatura GF Dedetização" : "Assinatura do Cliente"}
+                  </h2>
+                  <p className="text-xs text-muted">
+                    {isGF
+                      ? "Faça a assinatura do responsável técnico abaixo"
+                      : "Peça para o cliente assinar com o dedo abaixo"}
+                  </p>
                 </div>
               </div>
               <button
@@ -259,33 +313,43 @@ export default function AssinaturaModal({ osId, clienteNome, assinaturaAtual }) 
 
             <form onSubmit={handleSalvar} className="space-y-4">
               <div>
-                <label htmlFor="assinatura-nome" className="label">
-                  Nome legível de quem está assinando *
+                <label className="label">
+                  {isGF ? "Nome do Técnico / Responsável GF *" : "Nome completo de quem está assinando *"}
                 </label>
                 <input
-                  id="assinatura-nome"
                   type="text"
                   required
                   value={nome}
                   onChange={(e) => setNome(e.target.value)}
-                  placeholder="Nome completo do responsável"
+                  placeholder={isGF ? "Ex.: Gilvandro - GF Dedetização" : "Nome completo"}
                   className="input !min-h-[2.8rem]"
                 />
               </div>
 
-              <div>
-                <label htmlFor="assinatura-doc" className="label">
-                  Documento (RG ou CPF) - opcional
+              {!isGF && (
+                <div>
+                  <label className="label">Documento (CPF ou RG) - opcional</label>
+                  <input
+                    type="text"
+                    value={documento}
+                    onChange={(e) => setDocumento(e.target.value)}
+                    placeholder="Ex.: 123.456.789-00"
+                    className="input !min-h-[2.8rem]"
+                  />
+                </div>
+              )}
+
+              {isGF && (
+                <label className="flex items-center gap-2 text-xs text-neutral-300 font-medium cursor-pointer select-none">
+                  <input
+                    type="checkbox"
+                    checked={salvarPadrao}
+                    onChange={(e) => setSalvarPadrao(e.target.checked)}
+                    className="h-4 w-4 rounded border-line bg-surface-2 accent-[#39ff14]"
+                  />
+                  <span>Definir como assinatura padrão da empresa para novos documentos</span>
                 </label>
-                <input
-                  id="assinatura-doc"
-                  type="text"
-                  value={documento}
-                  onChange={(e) => setDocumento(e.target.value)}
-                  placeholder="Ex.: 12.345.678-9 ou 123.456.789-00"
-                  className="input !min-h-[2.8rem]"
-                />
-              </div>
+              )}
 
               {/* Área do Canvas de Assinatura */}
               <div>
@@ -315,7 +379,6 @@ export default function AssinaturaModal({ osId, clienteNome, assinaturaAtual }) 
                       cursor: "crosshair",
                     }}
                   />
-                  {/* Linha guia para assinar */}
                   <div className="pointer-events-none absolute bottom-10 left-6 right-6 border-b border-dashed border-neutral-300 flex justify-between text-[11px] font-semibold text-neutral-400 pb-1">
                     <span>X</span>
                     <span>Assine acima desta linha</span>
@@ -333,7 +396,6 @@ export default function AssinaturaModal({ osId, clienteNome, assinaturaAtual }) 
                   Cancelar
                 </button>
                 <button
-                  id="btn-confirmar-assinatura"
                   type="submit"
                   className="btn btn-primary"
                   disabled={salvando}

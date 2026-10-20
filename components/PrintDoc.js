@@ -4,7 +4,8 @@ import PrintButton from "./PrintButton";
 import Icon from "./Icon";
 import { BRAND } from "@/lib/constants";
 import { brl, dataBR, numero } from "@/lib/format";
-import { getDoc } from "@/lib/queries";
+import { getDoc, getConfig } from "@/lib/queries";
+import AssinaturaModal from "./AssinaturaModal";
 
 /**
  * Proposta Comercial e Ordem de Serviço em estilo A4 corporativo de alta fidelidade
@@ -19,6 +20,30 @@ export default async function PrintDoc({ cfg, id, isPublic = false }) {
   const isOrc = cfg.tipo === "orcamento";
   const numFormatado = numero(doc.id);
   const tituloDoc = isOrc ? "PROPOSTA COMERCIAL" : "ORDEM DE SERVIÇO";
+
+  // Identificação da assinatura da GF Dedetização (documento específico ou padrão da empresa)
+  let gfAssinatura = null;
+  if (doc.assinatura_gf_imagem) {
+    gfAssinatura = {
+      imagem: doc.assinatura_gf_imagem,
+      nome: doc.assinatura_gf_nome || "GF Dedetização - Técnico Responsável",
+      em: doc.assinatura_gf_em,
+    };
+  } else {
+    const padraoJson = await getConfig("assinatura_gf_padrao");
+    if (padraoJson) {
+      try {
+        const p = JSON.parse(padraoJson);
+        if (p?.imagem) {
+          gfAssinatura = {
+            imagem: p.imagem,
+            nome: p.nome || "GF Dedetização - Técnico Responsável",
+            em: null,
+          };
+        }
+      } catch {}
+    }
+  }
 
   // Identificação do endereço / área estimada
   const areaEstimada =
@@ -344,23 +369,44 @@ export default async function PrintDoc({ cfg, id, isPublic = false }) {
               </div>
             </div>
 
-            {/* 8. ASSINATURAS (Com suporte a Assinatura Digital) */}
+            {/* 8. ASSINATURAS (Com suporte a Assinatura da GF Dedetização e do Cliente) */}
             <div className="mt-8 grid grid-cols-2 gap-8 pt-4 text-center text-xs">
+              {/* Coluna 1: GF Dedetização */}
               <div className="flex flex-col justify-end">
-                <div className="h-12" />
-                <div className="border-t border-neutral-800 pt-1.5">
-                  <strong className="text-neutral-900">{BRAND.nome}</strong>
-                  <div className="text-[11px] text-neutral-500">Técnico Responsável</div>
-                </div>
+                {gfAssinatura?.imagem ? (
+                  <div>
+                    <img
+                      src={gfAssinatura.imagem}
+                      alt="Assinatura GF Dedetização"
+                      className="mx-auto -mb-1 block max-h-14 max-w-[210px] object-contain"
+                    />
+                    <div className="border-t border-neutral-800 pt-1.5">
+                      <strong className="text-neutral-900">{gfAssinatura.nome || BRAND.nome}</strong>
+                      <div className="text-[10px] text-neutral-500">
+                        GF Dedetização • Técnico Responsável
+                        {gfAssinatura.em ? ` • ${gfAssinatura.em}` : ""}
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <div>
+                    <div className="h-12" />
+                    <div className="border-t border-neutral-800 pt-1.5">
+                      <strong className="text-neutral-900">{BRAND.nome}</strong>
+                      <div className="text-[11px] text-neutral-500">Técnico Responsável</div>
+                    </div>
+                  </div>
+                )}
               </div>
 
+              {/* Coluna 2: Cliente / Responsável */}
               <div className="flex flex-col justify-end">
                 {doc.assinatura_imagem ? (
                   <div>
                     <img
                       src={doc.assinatura_imagem}
                       alt={`Assinatura de ${doc.assinatura_nome || doc.cliente_nome}`}
-                      className="mx-auto -mb-1 block max-h-12 max-w-[200px]"
+                      className="mx-auto -mb-1 block max-h-14 max-w-[210px] object-contain"
                     />
                     <div className="border-t border-neutral-800 pt-1.5">
                       <strong className="text-neutral-900">{doc.assinatura_nome || doc.cliente_nome}</strong>
@@ -381,6 +427,18 @@ export default async function PrintDoc({ cfg, id, isPublic = false }) {
                 )}
               </div>
             </div>
+
+            {/* Ação rápida para o cliente assinar online quando acessar pelo link público */}
+            {isPublic && !doc.assinatura_imagem && (
+              <div className="no-print mt-6 rounded-xl border border-neutral-200 bg-neutral-50 p-4">
+                <AssinaturaModal
+                  tipo={cfg.tipo}
+                  docId={doc.id}
+                  clienteNome={doc.cliente_nome}
+                  isPublic={true}
+                />
+              </div>
+            )}
 
             {/* 9. RODAPÉ INSTITUCIONAL */}
             <footer className="mt-6 border-t border-neutral-200 pt-3 text-center text-[10px] text-neutral-500">

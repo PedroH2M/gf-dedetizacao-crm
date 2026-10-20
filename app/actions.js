@@ -14,11 +14,17 @@ import {
   deleteClienteDb,
   deleteDocDb,
   getCliente,
+  getConfig,
   getDoc,
+  removerAssinaturaDocDb,
+  removerAssinaturaGFDocDb,
   removerAssinaturaOSDb,
+  saveAssinaturaDocDb,
+  saveAssinaturaGFDocDb,
   saveAssinaturaOSDb,
   saveClienteDb,
   saveDocDb,
+  setConfig,
   setStatusDb,
 } from "@/lib/queries";
 import { dispatchWhatsApp } from "@/lib/whatsapp-api";
@@ -197,11 +203,26 @@ export async function converterOrcamento(id) {
   redirect(`/os/${osId}/editar`);
 }
 
-// ---------------------------------------------------------------- Assinatura Digital
-export async function salvarAssinaturaOS(osId, formData) {
+// ---------------------------------------------------------------- Assinaturas Digitais (Cliente e GF)
+
+function formatarTimestampAssinatura() {
+  return new Date().toLocaleString("pt-BR", {
+    timeZone: "America/Sao_Paulo",
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
+
+/** Salva a assinatura digital do cliente (em OS ou Orçamento) pelo CRM */
+export async function salvarAssinaturaDoc(tipo, docId, formData) {
   await requireSession();
-  const id = Number(osId);
-  if (!id) return { error: "ID de OS inválido." };
+  const cfg = DOCS[tipo];
+  if (!cfg) return { error: "Tipo de documento inválido." };
+  const id = Number(docId);
+  if (!id) return { error: "ID inválido." };
 
   const imagem = String(formData.get("imagem") || "");
   const nome = String(formData.get("nome") || "").trim().slice(0, 120);
@@ -214,27 +235,113 @@ export async function salvarAssinaturaOS(osId, formData) {
     return { error: "Informe o nome legível de quem assinou." };
   }
 
-  const em = new Date().toLocaleString("pt-BR", {
-    timeZone: "America/Sao_Paulo",
-    day: "2-digit",
-    month: "2-digit",
-    year: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
+  const em = formatarTimestampAssinatura();
+  await saveAssinaturaDocDb(cfg.table, id, { imagem, nome, documento, em });
 
-  await saveAssinaturaOSDb(id, { imagem, nome, documento, em });
+  // Se for proposta comercial pendente/enviada, atualiza automaticamente para Aprovado
+  if (tipo === "orcamento") {
+    const doc = await getDoc(cfg.table, id);
+    if (doc && (doc.status === "Pendente" || doc.status === "Enviado")) {
+      await setStatusDb(cfg.table, id, "Aprovado");
+    }
+  }
+
   revalidatePath("/", "layout");
   return { success: true };
 }
 
-export async function removerAssinaturaOS(osId) {
+/** Remove a assinatura do cliente de uma OS ou Orçamento */
+export async function removerAssinaturaDoc(tipo, docId) {
   await requireSession();
-  const id = Number(osId);
+  const cfg = DOCS[tipo];
+  if (!cfg) return;
+  const id = Number(docId);
   if (!id) return;
 
-  await removerAssinaturaOSDb(id);
+  await removerAssinaturaDocDb(cfg.table, id);
   revalidatePath("/", "layout");
+}
+
+/** Salva a assinatura da GF Dedetização (Técnico / Responsável) na OS ou Proposta */
+export async function salvarAssinaturaGF(tipo, docId, formData) {
+  await requireSession();
+  const cfg = DOCS[tipo];
+  if (!cfg) return { error: "Tipo de documento inválido." };
+  const id = Number(docId);
+  if (!id) return { error: "ID inválido." };
+
+  const imagem = String(formData.get("imagem") || "");
+  const nome = String(formData.get("nome") || "GF Dedetização - Técnico Responsável").trim().slice(0, 120);
+  const salvarPadrao = formData.get("salvarPadrao") === "true" || formData.get("salvarPadrao") === "on";
+
+  if (!imagem || !imagem.startsWith("data:image/png;base64,")) {
+    return { error: "Por favor, faça a assinatura da GF no quadro antes de salvar." };
+  }
+
+  const em = formatarTimestampAssinatura();
+  await saveAssinaturaGFDocDb(cfg.table, id, { imagem, nome, em });
+
+  // Se solicitado, salva como assinatura padrão da empresa para novos documentos
+  if (salvarPadrao) {
+    await setConfig("assinatura_gf_padrao", JSON.stringify({ imagem, nome }));
+  }
+
+  revalidatePath("/", "layout");
+  return { success: true };
+}
+
+/** Remove a assinatura da GF Dedetização do documento */
+export async function removerAssinaturaGF(tipo, docId) {
+  await requireSession();
+  const cfg = DOCS[tipo];
+  if (!cfg) return;
+  const id = Number(docId);
+  if (!id) return;
+
+  await removerAssinaturaGFDocDb(cfg.table, id);
+  revalidatePath("/", "layout");
+}
+
+/** Permite que o cliente assine a proposta ou OS pela página pública (/proposta/[id]) */
+export async function salvarAssinaturaPublica(tipo, docId, formData) {
+  const cfg = DOCS[tipo];
+  if (!cfg) return { error: "Tipo de documento inválido." };
+  const id = Number(docId);
+  if (!id) return { error: "ID inválido." };
+
+  const doc = await getDoc(cfg.table, id);
+  if (!doc) return { error: "Documento não encontrado." };
+
+  const imagem = String(formData.get("imagem") || "");
+  const nome = String(formData.get("nome") || doc.cliente_nome || "").trim().slice(0, 120);
+  const documento = String(formData.get("documento") || "").trim().slice(0, 40);
+
+  if (!imagem || !imagem.startsWith("data:image/png;base64,")) {
+    return { error: "Por favor, faça a sua assinatura na tela antes de confirmar." };
+  }
+  if (!nome || nome.length < 2) {
+    return { error: "Por favor, informe seu nome completo." };
+  }
+
+  const em = formatarTimestampAssinatura();
+  await saveAssinaturaDocDb(cfg.table, id, { imagem, nome, documento, em });
+
+  // Se for proposta pendente/enviada, passa para Aprovado
+  if (tipo === "orcamento" && (doc.status === "Pendente" || doc.status === "Enviado")) {
+    await setStatusDb(cfg.table, id, "Aprovado");
+  }
+
+  revalidatePath("/", "layout");
+  return { success: true };
+}
+
+// Aliases para compatibilidade com código existente
+export async function salvarAssinaturaOS(osId, fd) {
+  return await salvarAssinaturaDoc("os", osId, fd);
+}
+
+export async function removerAssinaturaOS(osId) {
+  return await removerAssinaturaDoc("os", osId);
 }
 
 // ---------------------------------------------------- Envios Automáticos (WhatsApp & E-mail)

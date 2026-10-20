@@ -82,25 +82,40 @@ export default async function DocDetail({ cfg, id }) {
         </div>
       </section>
 
-      {/* Assinatura Digital do Cliente (apenas para Ordens de Serviço) */}
-      {!isOrc && (
-        <section>
-          <AssinaturaModal
-            osId={doc.id}
-            clienteNome={doc.cliente_nome}
-            assinaturaAtual={
-              doc.assinatura_imagem
-                ? {
-                    imagem: doc.assinatura_imagem,
-                    nome: doc.assinatura_nome,
-                    documento: doc.assinatura_documento,
-                    em: doc.assinatura_em,
-                  }
-                : null
-            }
-          />
-        </section>
-      )}
+      {/* Assinaturas Digitais (GF Dedetização e Cliente) */}
+      <section className="space-y-3">
+        <AssinaturaModal
+          tipo={cfg.tipo}
+          docId={doc.id}
+          alvo="gf"
+          assinaturaAtual={
+            doc.assinatura_gf_imagem
+              ? {
+                  imagem: doc.assinatura_gf_imagem,
+                  nome: doc.assinatura_gf_nome,
+                  em: doc.assinatura_gf_em,
+                }
+              : null
+          }
+        />
+
+        <AssinaturaModal
+          tipo={cfg.tipo}
+          docId={doc.id}
+          alvo="cliente"
+          clienteNome={doc.cliente_nome}
+          assinaturaAtual={
+            doc.assinatura_imagem
+              ? {
+                  imagem: doc.assinatura_imagem,
+                  nome: doc.assinatura_nome,
+                  documento: doc.assinatura_documento,
+                  em: doc.assinatura_em,
+                }
+              : null
+          }
+        />
+      </section>
 
       <section>
         <p className="section-title !mt-2">Alterar status</p>
