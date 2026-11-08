@@ -16,6 +16,8 @@ export default function EnvioBotoes({
   const [statusMsg, setStatusMsg] = useState(null);
   const [modalApi, setModalApi] = useState(null);
 
+  const rotuloDoc = tipo === "orcamento" ? "proposta" : "Ordem de Serviço";
+
   const handleWhatsAppAutomatico = (e) => {
     e.preventDefault();
     setStatusMsg(null);
@@ -26,7 +28,7 @@ export default function EnvioBotoes({
         if (res.ok) {
           setStatusMsg({
             type: "success",
-            text: "✓ Mensagem com proposta em PDF enviada com sucesso no WhatsApp do cliente!",
+            text: `✓ Mensagem com ${rotuloDoc} em PDF enviada com sucesso no WhatsApp do cliente!`,
           });
         } else if (res.unconfigured) {
           setModalApi("whatsapp");
@@ -59,7 +61,7 @@ export default function EnvioBotoes({
         if (res.ok) {
           setStatusMsg({
             type: "success",
-            text: `✓ E-mail no-reply com a proposta em PDF e logotipo enviado para ${doc.cliente_email}!`,
+            text: `✓ E-mail no-reply com a ${rotuloDoc} em PDF e logotipo enviado para ${doc.cliente_email}!`,
           });
         } else if (res.needsDomain) {
           setModalApi("email_domain");

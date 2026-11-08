@@ -8,6 +8,220 @@ import { getDoc, getConfig } from "@/lib/queries";
 import AssinaturaModal from "./AssinaturaModal";
 
 /**
+ * bloco de assinaturas compartilhado entre Ordem de Serviço e Proposta Comercial
+ */
+function BlocoAssinaturas({ doc, gfAssinatura, cfg, isPublic }) {
+  return (
+    <>
+      <div className="mt-8 grid grid-cols-2 gap-8 pt-4 text-center text-xs">
+        {/* Coluna 1: GF Dedetização */}
+        <div className="flex flex-col justify-end">
+          {gfAssinatura?.imagem ? (
+            <div>
+              <img
+                src={gfAssinatura.imagem}
+                alt="Assinatura GF Dedetização"
+                className="mx-auto -mb-1 block max-h-14 max-w-[210px] object-contain"
+              />
+              <div className="border-t border-neutral-800 pt-1.5">
+                <strong className="text-neutral-900">{gfAssinatura.nome || BRAND.nome}</strong>
+                <div className="text-[10px] text-neutral-500">
+                  GF Dedetização • Técnico Responsável
+                  {gfAssinatura.em ? ` • ${gfAssinatura.em}` : ""}
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div>
+              <div className="h-12" />
+              <div className="border-t border-neutral-800 pt-1.5">
+                <strong className="text-neutral-900">{BRAND.nome}</strong>
+                <div className="text-[11px] text-neutral-500">Técnico Responsável</div>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Coluna 2: Cliente / Responsável */}
+        <div className="flex flex-col justify-end">
+          {doc.assinatura_imagem ? (
+            <div>
+              <img
+                src={doc.assinatura_imagem}
+                alt={`Assinatura de ${doc.assinatura_nome || doc.cliente_nome}`}
+                className="mx-auto -mb-1 block max-h-14 max-w-[210px] object-contain"
+              />
+              <div className="border-t border-neutral-800 pt-1.5">
+                <strong className="text-neutral-900">{doc.assinatura_nome || doc.cliente_nome}</strong>
+                <div className="text-[10px] text-neutral-500">
+                  Assinado digitalmente em {doc.assinatura_em}
+                  {doc.assinatura_documento ? ` • Doc: ${doc.assinatura_documento}` : ""}
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div>
+              <div className="h-12" />
+              <div className="border-t border-neutral-800 pt-1.5">
+                <strong className="text-neutral-900">{doc.cliente_nome}</strong>
+                <div className="text-[11px] text-neutral-500">Cliente / Responsável</div>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Ação rápida para o cliente assinar online quando acessar pelo link público */}
+      {isPublic && !doc.assinatura_imagem && (
+        <div className="no-print mt-6 rounded-xl border border-neutral-200 bg-neutral-50 p-4">
+          <AssinaturaModal
+            tipo={cfg.tipo}
+            docId={doc.id}
+            clienteNome={doc.cliente_nome}
+            isPublic={true}
+          />
+        </div>
+      )}
+    </>
+  );
+}
+
+/**
+ * Modelo limpo e direto de Ordem de Serviço (OS)
+ */
+function PrintOSLayout({ doc, numFormatado, gfAssinatura, cfg, isPublic }) {
+  const statusColors = {
+    Concluída: "text-[#15803d] bg-[#dcfce7]",
+    "Em andamento": "text-[#0369a1] bg-[#e0f2fe]",
+    Agendada: "text-[#b45309] bg-[#fef3c7]",
+    Cancelada: "text-[#b91c1c] bg-[#fee2e2]",
+  };
+  const badgeClass = statusColors[doc.status] || "text-neutral-700 bg-neutral-100";
+
+  return (
+    <article className="proposta-container font-sans text-[#1f2937]">
+      {/* 1. TOPO LIMPO */}
+      <header className="proposta-banner flex flex-wrap items-center justify-between gap-4 rounded-lg bg-[#1e2420] px-6 py-4 text-white print:rounded-none">
+        <div className="flex items-center gap-3">
+          <img
+            src="/logo.png"
+            alt="GF Dedetização"
+            className="block h-12 w-auto object-contain"
+          />
+          <div className="border-l border-white/15 pl-3 text-xs text-neutral-300">
+            <div className="font-bold text-white">{BRAND.nome}</div>
+            <div>{BRAND.telefone} • @{BRAND.instagram}</div>
+          </div>
+        </div>
+
+        <div className="text-right">
+          <div className="text-xs font-bold tracking-widest text-[#22c55e] uppercase">
+            Ordem de Serviço
+          </div>
+          <div className="text-xl font-black text-white">Nº {numFormatado}</div>
+        </div>
+      </header>
+
+      <div className="space-y-5 pt-6">
+        {/* 2. RESUMO RÁPIDO (DATA E STATUS) */}
+        <div className="flex flex-wrap items-center justify-between gap-2 border-b border-neutral-200 pb-3 text-xs text-neutral-600">
+          <div>
+            Data de atendimento: <strong className="text-neutral-900">{dataBR(doc.data)}</strong>
+          </div>
+          <span className={`rounded-full px-3 py-0.5 text-[11px] font-bold ${badgeClass}`}>
+            {doc.status}
+          </span>
+        </div>
+
+        {/* 3. DADOS DO CLIENTE */}
+        <section className="rounded-lg border border-neutral-200 p-4">
+          <h2 className="mb-3 text-[11px] font-bold tracking-wider text-neutral-400 uppercase">
+            Dados do Cliente
+          </h2>
+          <div className="grid grid-cols-1 gap-3 text-xs sm:grid-cols-2">
+            <div>
+              <span className="text-neutral-500">Cliente: </span>
+              <strong className="text-sm text-neutral-900">{doc.cliente_nome}</strong>
+            </div>
+            <div>
+              <span className="text-neutral-500">Telefone: </span>
+              <strong className="text-neutral-900">{doc.cliente_telefone || "—"}</strong>
+            </div>
+            <div className="sm:col-span-2">
+              <span className="text-neutral-500">Endereço: </span>
+              <strong className="text-neutral-800">{doc.cliente_endereco || "—"}</strong>
+            </div>
+            {doc.cliente_email && (
+              <div className="sm:col-span-2">
+                <span className="text-neutral-500">E-mail: </span>
+                <span className="text-neutral-800">{doc.cliente_email}</span>
+              </div>
+            )}
+          </div>
+        </section>
+
+        {/* 4. SERVIÇO E PRODUTOS */}
+        <section className="rounded-lg border border-neutral-200 p-4 space-y-4">
+          <div className="flex items-start justify-between gap-4 border-b border-neutral-100 pb-4">
+            <div>
+              <div className="text-[11px] font-bold tracking-wider text-neutral-400 uppercase">
+                Serviço Realizado
+              </div>
+              <div className="mt-1 text-base font-black text-neutral-900">
+                {doc.servico}
+              </div>
+            </div>
+            <div className="text-right shrink-0">
+              <div className="text-[11px] font-bold tracking-wider text-neutral-400 uppercase">
+                Valor Total
+              </div>
+              <div className="mt-1 text-lg font-black text-[#16a34a]">
+                {brl(doc.valor)}
+              </div>
+            </div>
+          </div>
+
+          {doc.produtos && (
+            <div>
+              <div className="text-[11px] font-bold tracking-wider text-neutral-400 uppercase">
+                Produtos Utilizados
+              </div>
+              <p className="mt-1 whitespace-pre-wrap text-xs leading-relaxed text-neutral-800">
+                {doc.produtos}
+              </p>
+            </div>
+          )}
+
+          {doc.observacoes && (
+            <div className="border-t border-neutral-100 pt-3">
+              <div className="text-[11px] font-bold tracking-wider text-neutral-400 uppercase">
+                Observações / Garantia
+              </div>
+              <p className="mt-1 whitespace-pre-wrap text-xs leading-relaxed text-neutral-700">
+                {doc.observacoes}
+              </p>
+            </div>
+          )}
+        </section>
+
+        {/* 5. DECLARAÇÃO SIMPLES */}
+        <p className="text-center text-[11px] text-neutral-500 pt-2">
+          Declaro que o serviço descrito nesta Ordem de Serviço foi realizado conforme especificado acima.
+        </p>
+
+        {/* 6. ASSINATURAS (Empresa GF Dedetização e Cliente) */}
+        <BlocoAssinaturas doc={doc} gfAssinatura={gfAssinatura} cfg={cfg} isPublic={isPublic} />
+
+        {/* 7. RODAPÉ */}
+        <footer className="mt-8 border-t border-neutral-200 pt-3 text-center text-[10px] text-neutral-400">
+          <strong className="text-neutral-600">{BRAND.nome}</strong> • {BRAND.slogan} • WhatsApp: {BRAND.telefone}
+        </footer>
+      </div>
+    </article>
+  );
+}
+
+/**
  * Proposta Comercial e Ordem de Serviço em estilo A4 corporativo de alta fidelidade
  * baseado na identidade visual oficial da GF Dedetização.
  */
@@ -86,7 +300,16 @@ export default async function PrintDoc({ cfg, id, isPublic = false }) {
 
       {/* Folha A4 do Documento */}
       <div className="mx-auto my-4 max-w-[850px] bg-white p-6 shadow-xl print:my-0 print:max-w-none print:p-0 print:shadow-none sm:p-10">
-        <article className="proposta-container font-sans text-[#1f2937]">
+        {!isOrc ? (
+          <PrintOSLayout
+            doc={doc}
+            numFormatado={numFormatado}
+            gfAssinatura={gfAssinatura}
+            cfg={cfg}
+            isPublic={isPublic}
+          />
+        ) : (
+          <article className="proposta-container font-sans text-[#1f2937]">
           {/* 1. TOPO: Banner Escuro Oficial */}
           <header className="proposta-banner flex flex-wrap items-center justify-between gap-4 rounded-t-sm bg-[#1e2420] px-6 py-5 text-white print:rounded-none">
             <div className="flex items-center gap-3">
@@ -370,75 +593,7 @@ export default async function PrintDoc({ cfg, id, isPublic = false }) {
             </div>
 
             {/* 8. ASSINATURAS (Com suporte a Assinatura da GF Dedetização e do Cliente) */}
-            <div className="mt-8 grid grid-cols-2 gap-8 pt-4 text-center text-xs">
-              {/* Coluna 1: GF Dedetização */}
-              <div className="flex flex-col justify-end">
-                {gfAssinatura?.imagem ? (
-                  <div>
-                    <img
-                      src={gfAssinatura.imagem}
-                      alt="Assinatura GF Dedetização"
-                      className="mx-auto -mb-1 block max-h-14 max-w-[210px] object-contain"
-                    />
-                    <div className="border-t border-neutral-800 pt-1.5">
-                      <strong className="text-neutral-900">{gfAssinatura.nome || BRAND.nome}</strong>
-                      <div className="text-[10px] text-neutral-500">
-                        GF Dedetização • Técnico Responsável
-                        {gfAssinatura.em ? ` • ${gfAssinatura.em}` : ""}
-                      </div>
-                    </div>
-                  </div>
-                ) : (
-                  <div>
-                    <div className="h-12" />
-                    <div className="border-t border-neutral-800 pt-1.5">
-                      <strong className="text-neutral-900">{BRAND.nome}</strong>
-                      <div className="text-[11px] text-neutral-500">Técnico Responsável</div>
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              {/* Coluna 2: Cliente / Responsável */}
-              <div className="flex flex-col justify-end">
-                {doc.assinatura_imagem ? (
-                  <div>
-                    <img
-                      src={doc.assinatura_imagem}
-                      alt={`Assinatura de ${doc.assinatura_nome || doc.cliente_nome}`}
-                      className="mx-auto -mb-1 block max-h-14 max-w-[210px] object-contain"
-                    />
-                    <div className="border-t border-neutral-800 pt-1.5">
-                      <strong className="text-neutral-900">{doc.assinatura_nome || doc.cliente_nome}</strong>
-                      <div className="text-[10px] text-neutral-500">
-                        Assinado digitalmente em {doc.assinatura_em}
-                        {doc.assinatura_documento ? ` • Doc: ${doc.assinatura_documento}` : ""}
-                      </div>
-                    </div>
-                  </div>
-                ) : (
-                  <div>
-                    <div className="h-12" />
-                    <div className="border-t border-neutral-800 pt-1.5">
-                      <strong className="text-neutral-900">{doc.cliente_nome}</strong>
-                      <div className="text-[11px] text-neutral-500">Cliente / Responsável</div>
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {/* Ação rápida para o cliente assinar online quando acessar pelo link público */}
-            {isPublic && !doc.assinatura_imagem && (
-              <div className="no-print mt-6 rounded-xl border border-neutral-200 bg-neutral-50 p-4">
-                <AssinaturaModal
-                  tipo={cfg.tipo}
-                  docId={doc.id}
-                  clienteNome={doc.cliente_nome}
-                  isPublic={true}
-                />
-              </div>
-            )}
+            <BlocoAssinaturas doc={doc} gfAssinatura={gfAssinatura} cfg={cfg} isPublic={isPublic} />
 
             {/* 9. RODAPÉ INSTITUCIONAL */}
             <footer className="mt-6 border-t border-neutral-200 pt-3 text-center text-[10px] text-neutral-500">
@@ -451,6 +606,7 @@ export default async function PrintDoc({ cfg, id, isPublic = false }) {
             </footer>
           </div>
         </article>
+        )}
       </div>
     </div>
   );
