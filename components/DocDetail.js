@@ -78,6 +78,7 @@ export default async function DocDetail({ cfg, id }) {
               {vencida ? " — vencida" : ""}
             </Linha>
           )}
+          {!isOrc && <Linha label="Não conformidades">{doc.nao_conformidades}</Linha>}
           <Linha label="Observações">{doc.observacoes}</Linha>
         </div>
       </section>

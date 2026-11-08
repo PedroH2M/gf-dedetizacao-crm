@@ -126,7 +126,7 @@ export async function deleteCliente(id) {
 
 const CAMPOS_DOC = [
   "id", "cliente_id", "data", "servico", "produtos", "valor", "status",
-  "observacoes", "metodologia", "validade",
+  "nao_conformidades", "observacoes", "metodologia", "validade",
 ];
 
 async function salvarDoc(tipo, fd) {
@@ -141,6 +141,7 @@ async function salvarDoc(tipo, fd) {
   const produtos = campo(fd, "produtos", 1000);
   const valor = parseValor(fd.get("valor"));
   const status = campo(fd, "status", 30);
+  const nao_conformidades = campo(fd, "nao_conformidades", 2000);
   const observacoes = campo(fd, "observacoes", 2000);
   const metodologia = campo(fd, "metodologia", 2000);
   const validade = campo(fd, "validade", 10);
@@ -156,6 +157,7 @@ async function salvarDoc(tipo, fd) {
 
   const novoId = await saveDocDb(cfg.table, {
     id, cliente_id, data, servico, produtos, valor, status, observacoes,
+    nao_conformidades: tipo === "os" ? nao_conformidades : null,
     metodologia: tipo === "orcamento" ? metodologia : null,
     validade: tipo === "orcamento" ? validade : null,
   });

@@ -89,7 +89,7 @@ function BlocoAssinaturas({ doc, gfAssinatura, cfg, isPublic }) {
 /**
  * Modelo limpo e direto de Ordem de Serviço (OS)
  */
-function PrintOSLayout({ doc, numFormatado, gfAssinatura, cfg, isPublic }) {
+function PrintOSLayout({ doc, numFormatado, areaEstimada, gfAssinatura, cfg, isPublic }) {
   const statusColors = {
     Concluída: "text-[#15803d] bg-[#dcfce7]",
     "Em andamento": "text-[#0369a1] bg-[#e0f2fe]",
@@ -122,7 +122,7 @@ function PrintOSLayout({ doc, numFormatado, gfAssinatura, cfg, isPublic }) {
         </div>
       </header>
 
-      <div className="space-y-5 pt-6">
+      <div className="space-y-5 pt-5">
         {/* 2. RESUMO RÁPIDO (DATA E STATUS) */}
         <div className="flex flex-wrap items-center justify-between gap-2 border-b border-neutral-200 pb-3 text-xs text-neutral-600">
           <div>
@@ -133,68 +133,164 @@ function PrintOSLayout({ doc, numFormatado, gfAssinatura, cfg, isPublic }) {
           </span>
         </div>
 
-        {/* 3. DADOS DO CLIENTE */}
-        <section className="rounded-lg border border-neutral-200 p-4">
-          <h2 className="mb-3 text-[11px] font-bold tracking-wider text-neutral-400 uppercase">
-            Dados do Cliente
-          </h2>
-          <div className="grid grid-cols-1 gap-3 text-xs sm:grid-cols-2">
+        {/* 3. DADOS DO CLIENTE + PRINCIPAIS PRAGAS QUE CONTROLAMOS */}
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-12">
+          {/* Coluna Esquerda: Dados do Cliente */}
+          <section className="rounded-lg border border-neutral-200 p-4 md:col-span-7 flex flex-col justify-between">
             <div>
-              <span className="text-neutral-500">Cliente: </span>
-              <strong className="text-sm text-neutral-900">{doc.cliente_nome}</strong>
-            </div>
-            <div>
-              <span className="text-neutral-500">Telefone: </span>
-              <strong className="text-neutral-900">{doc.cliente_telefone || "—"}</strong>
-            </div>
-            <div className="sm:col-span-2">
-              <span className="text-neutral-500">Endereço: </span>
-              <strong className="text-neutral-800">{doc.cliente_endereco || "—"}</strong>
-            </div>
-            {doc.cliente_email && (
-              <div className="sm:col-span-2">
-                <span className="text-neutral-500">E-mail: </span>
-                <span className="text-neutral-800">{doc.cliente_email}</span>
+              <h2 className="mb-3 text-[11px] font-black tracking-wider text-neutral-800 uppercase">
+                Dados do Cliente
+              </h2>
+              <div className="space-y-2 text-xs">
+                <div>
+                  <span className="text-neutral-500">Cliente: </span>
+                  <strong className="text-sm text-neutral-900">{doc.cliente_nome}</strong>
+                </div>
+                <div>
+                  <span className="text-neutral-500">Telefone: </span>
+                  <strong className="text-neutral-900">{doc.cliente_telefone || "—"}</strong>
+                </div>
+                <div>
+                  <span className="text-neutral-500">Endereço: </span>
+                  <strong className="text-neutral-800">{doc.cliente_endereco || "—"}</strong>
+                </div>
+                {doc.cliente_email && (
+                  <div>
+                    <span className="text-neutral-500">E-mail: </span>
+                    <span className="text-neutral-800">{doc.cliente_email}</span>
+                  </div>
+                )}
               </div>
-            )}
-          </div>
-        </section>
+            </div>
+          </section>
 
-        {/* 4. SERVIÇO E PRODUTOS */}
-        <section className="rounded-lg border border-neutral-200 p-4 space-y-4">
-          <div className="flex items-start justify-between gap-4 border-b border-neutral-100 pb-4">
-            <div>
-              <div className="text-[11px] font-bold tracking-wider text-neutral-400 uppercase">
-                Serviço Realizado
-              </div>
-              <div className="mt-1 text-base font-black text-neutral-900">
-                {doc.servico}
-              </div>
-            </div>
-            <div className="text-right shrink-0">
-              <div className="text-[11px] font-bold tracking-wider text-neutral-400 uppercase">
-                Valor Total
-              </div>
-              <div className="mt-1 text-lg font-black text-[#16a34a]">
-                {brl(doc.valor)}
-              </div>
-            </div>
+          {/* Coluna Direita: Principais Pragas que Controlamos */}
+          <div className="rounded-lg border border-[#e2e8e5] bg-[#f4f7f5] p-3.5 md:col-span-5">
+            <h3 className="mb-2.5 text-[11px] font-black tracking-wider text-neutral-800 uppercase">
+              PRINCIPAIS PRAGAS QUE CONTROLAMOS
+            </h3>
+            <ul className="space-y-2 text-[11px]">
+              <li className="flex items-start gap-1.5">
+                <span className="mt-0.5 text-xs text-[#16a34a]">◆</span>
+                <div>
+                  <strong className="text-neutral-900">Insetos em geral</strong>{" "}
+                  <span className="text-[10px] text-neutral-500">
+                    (baratas, formigas, aranhas, cupins etc.)
+                  </span>
+                </div>
+              </li>
+              <li className="flex items-start gap-1.5">
+                <span className="mt-0.5 text-xs text-[#16a34a]">◆</span>
+                <div>
+                  <strong className="text-neutral-900">Roedores</strong>{" "}
+                  <span className="text-[10px] text-neutral-500">
+                    (ratos e camundongos)
+                  </span>
+                </div>
+              </li>
+              <li className="flex items-start gap-1.5">
+                <span className="mt-0.5 text-xs text-[#16a34a]">◆</span>
+                <div>
+                  <strong className="text-neutral-900">Mosquitos</strong>{" "}
+                  <span className="text-[10px] text-neutral-500">
+                    (dengue, zika, chikungunya)
+                  </span>
+                </div>
+              </li>
+              <li className="flex items-start gap-1.5">
+                <span className="mt-0.5 text-xs text-[#16a34a]">◆</span>
+                <div>
+                  <strong className="text-neutral-900">Ácaros</strong>{" "}
+                  <span className="text-[10px] text-neutral-500">
+                    (alérgenos e poeira)
+                  </span>
+                </div>
+              </li>
+              <li className="flex items-start gap-1.5">
+                <span className="mt-0.5 text-xs text-[#16a34a]">◆</span>
+                <div>
+                  <strong className="text-neutral-900">Cupins</strong>{" "}
+                  <span className="text-[10px] text-neutral-500">
+                    (madeira e estruturas)
+                  </span>
+                </div>
+              </li>
+            </ul>
           </div>
+        </div>
 
-          {doc.produtos && (
-            <div>
-              <div className="text-[11px] font-bold tracking-wider text-neutral-400 uppercase">
-                Produtos Utilizados
-              </div>
-              <p className="mt-1 whitespace-pre-wrap text-xs leading-relaxed text-neutral-800">
-                {doc.produtos}
-              </p>
+        {/* 4. SERVIÇOS OFERECIDOS */}
+        <div>
+          <div className="flex items-center gap-2 text-xs font-black tracking-wider text-neutral-900 uppercase">
+            <span className="text-sm text-[#16a34a]">●</span>
+            <span>SERVIÇOS OFERECIDOS</span>
+          </div>
+          <p className="mt-1 text-[11.5px] leading-relaxed text-neutral-600">
+            Dedetização, desratização, desinsetização, controle de pragas urbanas e sanitização de
+            ambientes. Utilizamos técnicas modernas e produtos regularizados, seguindo as normas de
+            segurança e meio ambiente.
+          </p>
+        </div>
+
+        {/* 5. TABELA DE ITENS / SERVIÇO */}
+        <div className="overflow-hidden rounded border border-neutral-300">
+          <table className="w-full border-collapse text-left text-xs">
+            <thead>
+              <tr className="bg-[#4c5d54] text-[10.5px] font-black tracking-wider text-white uppercase">
+                <th className="w-12 px-3 py-2.5 text-center">ITEM</th>
+                <th className="px-4 py-2.5">DESCRIÇÃO DO SERVIÇO</th>
+                <th className="px-3 py-2.5">ÁREA ESTIMADA</th>
+                <th className="w-28 px-4 py-2.5 text-right">VALOR</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-neutral-200">
+              <tr className="bg-white">
+                <td className="px-3 py-3 text-center font-bold text-neutral-500">01</td>
+                <td className="px-4 py-3">
+                  <div className="font-extrabold text-neutral-900 uppercase">
+                    {doc.servico}
+                  </div>
+                  {doc.metodologia && (
+                    <div className="mt-1 text-[11px] text-neutral-600">
+                      <strong>Metodologia:</strong> {doc.metodologia}
+                    </div>
+                  )}
+                  {doc.produtos && (
+                    <div className="mt-0.5 text-[11px] text-neutral-600">
+                      <strong>Produtos:</strong> {doc.produtos}
+                    </div>
+                  )}
+                  {doc.cliente_endereco && (
+                    <div className="mt-1 text-[10px] text-neutral-500 uppercase">
+                      <strong>Local:</strong> {doc.cliente_endereco}
+                    </div>
+                  )}
+                </td>
+                <td className="px-3 py-3 text-[11px] font-semibold text-neutral-700">
+                  {areaEstimada}
+                </td>
+                <td className="px-4 py-3 text-right text-xs font-black text-neutral-900 whitespace-nowrap">
+                  {brl(doc.valor)}
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        {/* 6. NÃO CONFORMIDADES E OBSERVAÇÕES */}
+        <section className="rounded-lg border border-neutral-200 p-4 space-y-3">
+          <div>
+            <div className="text-[11px] font-black tracking-wider text-neutral-800 uppercase">
+              Não Conformidades
             </div>
-          )}
+            <p className="mt-1 whitespace-pre-wrap text-xs leading-relaxed text-neutral-700">
+              {doc.nao_conformidades || "Nenhuma não conformidade registrada."}
+            </p>
+          </div>
 
           {doc.observacoes && (
             <div className="border-t border-neutral-100 pt-3">
-              <div className="text-[11px] font-bold tracking-wider text-neutral-400 uppercase">
+              <div className="text-[11px] font-black tracking-wider text-neutral-800 uppercase">
                 Observações / Garantia
               </div>
               <p className="mt-1 whitespace-pre-wrap text-xs leading-relaxed text-neutral-700">
@@ -204,16 +300,16 @@ function PrintOSLayout({ doc, numFormatado, gfAssinatura, cfg, isPublic }) {
           )}
         </section>
 
-        {/* 5. DECLARAÇÃO SIMPLES */}
-        <p className="text-center text-[11px] text-neutral-500 pt-2">
+        {/* 7. DECLARAÇÃO SIMPLES */}
+        <p className="text-center text-[11px] text-neutral-500 pt-1">
           Declaro que o serviço descrito nesta Ordem de Serviço foi realizado conforme especificado acima.
         </p>
 
-        {/* 6. ASSINATURAS (Empresa GF Dedetização e Cliente) */}
+        {/* 8. ASSINATURAS (Empresa GF Dedetização e Cliente) */}
         <BlocoAssinaturas doc={doc} gfAssinatura={gfAssinatura} cfg={cfg} isPublic={isPublic} />
 
-        {/* 7. RODAPÉ */}
-        <footer className="mt-8 border-t border-neutral-200 pt-3 text-center text-[10px] text-neutral-400">
+        {/* 9. RODAPÉ */}
+        <footer className="mt-6 border-t border-neutral-200 pt-3 text-center text-[10px] text-neutral-400">
           <strong className="text-neutral-600">{BRAND.nome}</strong> • {BRAND.slogan} • WhatsApp: {BRAND.telefone}
         </footer>
       </div>
@@ -304,6 +400,7 @@ export default async function PrintDoc({ cfg, id, isPublic = false }) {
           <PrintOSLayout
             doc={doc}
             numFormatado={numFormatado}
+            areaEstimada={areaEstimada}
             gfAssinatura={gfAssinatura}
             cfg={cfg}
             isPublic={isPublic}

@@ -68,6 +68,7 @@ async function seed() {
       produtos: "Gel Fipronil 0,05%, Deltametrina 2,5% CE, Quaternário de Amônio 5ª Geração",
       valor: 580.00,
       status: "Em andamento",
+      nao_conformidades: "Frestas na porta de acesso ao estoque e ralo sem tela protetora na área da cozinha.",
       observacoes: "Aplicação de gel em frestas e motores de geladeiras. Pulverização líquida nos ralos e caixas de gordura. Emissão de certificado de 6 meses."
     },
     {
@@ -77,6 +78,7 @@ async function seed() {
       produtos: "Cipermetrina 250 EC, Isca Raticida Bloco Parafinado (Brodifacoum)",
       valor: 1850.00,
       status: "Agendada",
+      nao_conformidades: "Acúmulo de caixas de papelão próximo às lixeiras do subsolo 1.",
       observacoes: "Pulverização em todas as lixeiras, garagens e bueiros. Reposição e mapeamento de 16 porta-iscas no perímetro."
     },
     {
@@ -101,8 +103,8 @@ async function seed() {
 
   for (const o of osData) {
     await run(
-      "INSERT INTO ordens_servico (cliente_id, data, servico, produtos, valor, status, observacoes) VALUES (?, ?, ?, ?, ?, ?, ?)",
-      o.cliente_id, o.data, o.servico, o.produtos, o.valor, o.status, o.observacoes
+      "INSERT INTO ordens_servico (cliente_id, data, servico, produtos, valor, status, nao_conformidades, observacoes) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+      o.cliente_id, o.data, o.servico, o.produtos, o.valor, o.status, o.nao_conformidades ?? null, o.observacoes
     );
   }
   console.log(`✓ ${osData.length} Ordens de Serviço criadas.`);

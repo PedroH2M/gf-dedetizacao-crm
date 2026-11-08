@@ -76,6 +76,15 @@ export default function DocForm({ cfg, clientes, doc, defaults }) {
         </>
       )}
 
+      {!isOrc && (
+        <div>
+          <label htmlFor="nao_conformidades" className="label">Não conformidades</label>
+          <textarea id="nao_conformidades" name="nao_conformidades" className="input" rows={3} maxLength={2000}
+            placeholder="Frestas em portas/ralos, acúmulo de resíduos, infiltrações, pontos de acesso de pragas..."
+            defaultValue={v("nao_conformidades")} />
+        </div>
+      )}
+
       <div>
         <label htmlFor="observacoes" className="label">Observações</label>
         <textarea id="observacoes" name="observacoes" className="input" rows={2} maxLength={2000}
