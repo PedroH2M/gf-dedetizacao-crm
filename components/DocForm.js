@@ -1,9 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { useActionState } from "react";
+import { useActionState, useState } from "react";
 import { saveOS, saveOrcamento } from "@/app/actions";
-import { SERVICOS } from "@/lib/constants";
+import { SERVICOS, resolverFlagsServico } from "@/lib/constants";
 
 /** Formulário compartilhado de Ordem de Serviço e Proposta Comercial. */
 export default function DocForm({ cfg, clientes, doc, defaults }) {
@@ -11,6 +11,17 @@ export default function DocForm({ cfg, clientes, doc, defaults }) {
   const [state, action, pending] = useActionState(isOrc ? saveOrcamento : saveOS, null);
   const v = (k) => state?.values?.[k] ?? doc?.[k] ?? defaults?.[k] ?? "";
   const voltar = doc ? `/${cfg.rota}/${doc.id}` : `/${cfg.rota}`;
+
+  const flagsIniciais = doc
+    ? resolverFlagsServico(doc)
+    : { dedetizacao: false, caixaDagua: false };
+
+  const [flagDedet, setFlagDedet] = useState(() =>
+    state?.values ? Boolean(state.values.flag_dedetizacao) : flagsIniciais.dedetizacao,
+  );
+  const [flagCaixa, setFlagCaixa] = useState(() =>
+    state?.values ? Boolean(state.values.flag_caixa_dagua) : flagsIniciais.caixaDagua,
+  );
 
   return (
     <form action={action} className="space-y-4">
@@ -41,9 +52,47 @@ export default function DocForm({ cfg, clientes, doc, defaults }) {
       </div>
 
       <div>
-        <label htmlFor="servico" className="label">Serviço *</label>
+        <span className="label">Tipo de serviço (modelo do documento) *</span>
+        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+          <label className="flex cursor-pointer items-center justify-between gap-3 rounded-lg border border-neutral-300 bg-white px-3.5 py-2.5 text-sm font-semibold text-neutral-800 hover:bg-neutral-50">
+            <span>Dedetização</span>
+            <span className="relative inline-flex items-center">
+              <input
+                type="checkbox"
+                name="flag_dedetizacao"
+                value="1"
+                checked={flagDedet}
+                onChange={(e) => setFlagDedet(e.target.checked)}
+                className="peer sr-only"
+              />
+              <span className="h-6 w-11 rounded-full bg-neutral-300 transition-colors peer-checked:bg-[#16a34a] peer-focus-visible:ring-2 peer-focus-visible:ring-[#16a34a]/40 after:absolute after:top-0.5 after:left-0.5 after:h-5 after:w-5 after:rounded-full after:bg-white after:shadow after:transition-transform peer-checked:after:translate-x-5" />
+            </span>
+          </label>
+          <label className="flex cursor-pointer items-center justify-between gap-3 rounded-lg border border-neutral-300 bg-white px-3.5 py-2.5 text-sm font-semibold text-neutral-800 hover:bg-neutral-50">
+            <span>Limpeza de caixa d&apos;água</span>
+            <span className="relative inline-flex items-center">
+              <input
+                type="checkbox"
+                name="flag_caixa_dagua"
+                value="1"
+                checked={flagCaixa}
+                onChange={(e) => setFlagCaixa(e.target.checked)}
+                className="peer sr-only"
+              />
+              <span className="h-6 w-11 rounded-full bg-neutral-300 transition-colors peer-checked:bg-[#16a34a] peer-focus-visible:ring-2 peer-focus-visible:ring-[#16a34a]/40 after:absolute after:top-0.5 after:left-0.5 after:h-5 after:w-5 after:rounded-full after:bg-white after:shadow after:transition-transform peer-checked:after:translate-x-5" />
+            </span>
+          </label>
+        </div>
+        <p className="mt-1 text-xs text-neutral-500">
+          Marque uma opção ou ambas para gerar o modelo individual ou unificado na impressão.
+        </p>
+      </div>
+
+      <div>
+        <label htmlFor="servico" className="label">Descrição do serviço *</label>
         <input id="servico" name="servico" className="input" required maxLength={200} list="servicos"
-          autoComplete="off" enterKeyHint="next" placeholder="Ex.: Dedetização geral" defaultValue={v("servico")} />
+          autoComplete="off" enterKeyHint="next" placeholder="Ex.: Dedetização geral"
+          defaultValue={v("servico")} />
         <datalist id="servicos">
           {SERVICOS.map((s) => <option key={s} value={s} />)}
         </datalist>

@@ -125,8 +125,8 @@ export async function deleteCliente(id) {
 // ---------------------------------------------------- Ordens de Serviço / Propostas
 
 const CAMPOS_DOC = [
-  "id", "cliente_id", "data", "servico", "produtos", "valor", "status",
-  "nao_conformidades", "observacoes", "metodologia", "validade",
+  "id", "cliente_id", "data", "servico", "flag_dedetizacao", "flag_caixa_dagua",
+  "produtos", "valor", "status", "nao_conformidades", "observacoes", "metodologia", "validade",
 ];
 
 async function salvarDoc(tipo, fd) {
@@ -137,6 +137,8 @@ async function salvarDoc(tipo, fd) {
   const id = Number(fd.get("id")) || 0;
   const cliente_id = Number(fd.get("cliente_id")) || 0;
   const data = campo(fd, "data", 10);
+  const flag_dedetizacao = fd.get("flag_dedetizacao") ? 1 : 0;
+  const flag_caixa_dagua = fd.get("flag_caixa_dagua") ? 1 : 0;
   const servico = campo(fd, "servico", 200);
   const produtos = campo(fd, "produtos", 1000);
   const valor = parseValor(fd.get("valor"));
@@ -149,6 +151,8 @@ async function salvarDoc(tipo, fd) {
   const erro = (error) => ({ error, values });
   if (!cliente_id || !(await getCliente(cliente_id))) return erro("Selecione o cliente.");
   if (!isISODate(data)) return erro("Informe uma data válida.");
+  if (!flag_dedetizacao && !flag_caixa_dagua)
+    return erro("Selecione pelo menos uma opção: Dedetização ou Limpeza de caixa d'água.");
   if (servico.length < 2) return erro("Informe o serviço.");
   if (valor === null || valor < 0 || valor > 10_000_000) return erro("Valor inválido.");
   if (!cfg.status.includes(status)) return erro("Status inválido.");
@@ -156,7 +160,7 @@ async function salvarDoc(tipo, fd) {
   if (id && !(await getDoc(cfg.table, id))) return erro("Registro não encontrado.");
 
   const novoId = await saveDocDb(cfg.table, {
-    id, cliente_id, data, servico, produtos, valor, status, observacoes,
+    id, cliente_id, data, servico, flag_dedetizacao, flag_caixa_dagua, produtos, valor, status, observacoes,
     nao_conformidades: tipo === "os" ? nao_conformidades : null,
     metodologia: tipo === "orcamento" ? metodologia : null,
     validade: tipo === "orcamento" ? validade : null,
@@ -195,6 +199,8 @@ export async function converterOrcamento(id) {
     cliente_id: o.cliente_id,
     data: hojeISO(),
     servico: o.servico,
+    flag_dedetizacao: o.flag_dedetizacao ?? 0,
+    flag_caixa_dagua: o.flag_caixa_dagua ?? 0,
     produtos: o.produtos,
     valor: o.valor,
     status: "Agendada",

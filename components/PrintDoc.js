@@ -2,7 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import PrintButton from "./PrintButton";
 import Icon from "./Icon";
-import { BRAND } from "@/lib/constants";
+import { BRAND, resolverFlagsServico } from "@/lib/constants";
 import { brl, dataBR, numero } from "@/lib/format";
 import { getDoc, getConfig } from "@/lib/queries";
 import AssinaturaModal from "./AssinaturaModal";
@@ -86,10 +86,82 @@ function BlocoAssinaturas({ doc, gfAssinatura, cfg, isPublic }) {
   );
 }
 
+function getModeloDocumento(flags) {
+  if (flags.dedetizacao && flags.caixaDagua) {
+    return {
+      subtituloOS: "Dedetização & Limpeza de Caixa d'Água",
+      bannerLinha1: "Proteção completa e água segura,",
+      bannerLinha2: "para o seu ambiente.",
+      apresentacao1:
+        "A GF Dedetizações tem o prazer de apresentar esta proposta comercial unificada, contemplando o controle de pragas urbanas (dedetização) e a limpeza e higienização de caixa d'água. Nosso objetivo é garantir um ambiente protegido e água potável de qualidade, com mais saúde, bem-estar e tranquilidade para sua família ou seu negócio.",
+      boxTitulo: "ESCOPO INTEGRADO DO SERVIÇO",
+      boxItens: [
+        { titulo: "Controle de insetos e roedores", desc: "(baratas, formigas, ratos, cupins etc.)" },
+        { titulo: "Barreiras químicas e sanitização", desc: "(produtos regularizados pela Anvisa)" },
+        { titulo: "Esgotamento e escovação", desc: "(remoção de lodo e sedimentos do reservatório)" },
+        { titulo: "Desinfecção química", desc: "(aplicação de hipoclorito de sódio dosado)" },
+        { titulo: "Inspeção e vedação", desc: "(conferência de tampa, boia e estanqueidade)" },
+      ],
+      sobreTitulo: "SERVIÇOS OFERECIDOS",
+      sobreTexto:
+        "Dedetização, desratização, desinsetização, controle de pragas urbanas e limpeza e desinfecção completa de caixas d'água e reservatórios. Utilizamos técnicas modernas e produtos regularizados, seguindo as normas sanitárias, de segurança e meio ambiente.",
+      colunaLocal: "ÁREA / RESERVATÓRIO",
+      notaTabela:
+        "* O valor final poderá ser ajustado conforme a metragem, o tipo de praga, a capacidade (litragem) e a quantidade de reservatórios.",
+    };
+  }
+
+  if (flags.caixaDagua) {
+    return {
+      subtituloOS: "Limpeza e Higienização de Caixa d'Água",
+      bannerLinha1: "Água limpa e segura,",
+      bannerLinha2: "para sua família ou empresa.",
+      apresentacao1:
+        "A GF Dedetizações tem o prazer de apresentar esta proposta comercial exclusiva para limpeza, higienização e desinfecção de caixa d'água. Nosso objetivo é garantir água potável de qualidade, livre de impurezas, lodo, bactérias e contaminações, trazendo mais saúde e tranquilidade para o seu ambiente.",
+      boxTitulo: "ETAPAS DA HIGIENIZAÇÃO",
+      boxItens: [
+        { titulo: "Esgotamento e drenagem", desc: "(esvaziamento controlado do reservatório)" },
+        { titulo: "Escovação completa", desc: "(remoção de lodo e sedimentos nas paredes e fundo)" },
+        { titulo: "Enxágue e sucção", desc: "(retirada total de resíduos acumulados)" },
+        { titulo: "Desinfecção química", desc: "(aplicação de hipoclorito de sódio dosado)" },
+        { titulo: "Inspeção e vedação", desc: "(conferência de tampa, boia e estanqueidade)" },
+      ],
+      sobreTitulo: "SOBRE O SERVIÇO",
+      sobreTexto:
+        "Limpeza e desinfecção completa de caixas d'água e reservatórios residenciais, comerciais e condominiais, seguindo as recomendações sanitárias e utilizando produtos regularizados para assegurar a potabilidade da água.",
+      colunaLocal: "LOCAL / RESERVATÓRIO",
+      notaTabela:
+        "* O valor final poderá ser ajustado conforme a capacidade (litragem), quantidade de reservatórios e condições de acesso.",
+    };
+  }
+
+  return {
+    subtituloOS: "Controle de Pragas / Dedetização",
+    bannerLinha1: "Seu ambiente protegido,",
+    bannerLinha2: "com qualidade e segurança.",
+    apresentacao1:
+      "A GF Dedetizações tem o prazer de apresentar esta proposta comercial, desenvolvida especialmente para atender às necessidades do seu ambiente. Nosso objetivo é oferecer soluções eficazes e seguras no controle de pragas, garantindo mais saúde, bem-estar e tranquilidade para sua família ou seu negócio.",
+    boxTitulo: "PRINCIPAIS PRAGAS QUE CONTROLAMOS",
+    boxItens: [
+      { titulo: "Insetos em geral", desc: "(baratas, formigas, aranhas, cupins etc.)" },
+      { titulo: "Roedores", desc: "(ratos e camundongos)" },
+      { titulo: "Mosquitos", desc: "(dengue, zika, chikungunya)" },
+      { titulo: "Ácaros", desc: "(alérgenos e poeira)" },
+      { titulo: "Cupins", desc: "(madeira e estruturas)" },
+    ],
+    sobreTitulo: "SERVIÇOS OFERECIDOS",
+    sobreTexto:
+      "Dedetização, desratização, desinsetização, controle de pragas urbanas e sanitização de ambientes. Utilizamos técnicas modernas e produtos regularizados, seguindo as normas de segurança e meio ambiente.",
+    colunaLocal: "ÁREA ESTIMADA",
+    notaTabela:
+      "* O valor final poderá ser ajustado conforme a metragem, o tipo de praga e a necessidade específica de cada ambiente.",
+  };
+}
+
 /**
  * Modelo limpo e direto de Ordem de Serviço (OS)
  */
-function PrintOSLayout({ doc, numFormatado, areaEstimada, gfAssinatura, cfg, isPublic }) {
+function PrintOSLayout({ doc, numFormatado, areaEstimada, gfAssinatura, cfg, isPublic, modelo }) {
   const statusColors = {
     Concluída: "text-[#15803d] bg-[#dcfce7]",
     "Em andamento": "text-[#0369a1] bg-[#e0f2fe]",
@@ -119,6 +191,7 @@ function PrintOSLayout({ doc, numFormatado, areaEstimada, gfAssinatura, cfg, isP
             Ordem de Serviço
           </div>
           <div className="text-xl font-black text-white">Nº {numFormatado}</div>
+          <div className="text-[10px] font-medium text-neutral-300">{modelo.subtituloOS}</div>
         </div>
       </header>
 
@@ -164,72 +237,23 @@ function PrintOSLayout({ doc, numFormatado, areaEstimada, gfAssinatura, cfg, isP
             </div>
           </section>
 
-          {/* Coluna Direita: Principais Pragas que Controlamos */}
+          {/* Coluna Direita: Box de Destaque conforme o modelo da OS */}
           <div className="rounded-lg border border-[#e2e8e5] bg-[#f4f7f5] p-3.5 md:col-span-5">
             <h3 className="mb-2.5 text-[11px] font-black tracking-wider text-neutral-800 uppercase">
-              PRINCIPAIS PRAGAS QUE CONTROLAMOS
+              {modelo.boxTitulo}
             </h3>
             <ul className="space-y-2 text-[11px]">
-              <li className="flex items-start gap-1.5">
-                <span className="mt-0.5 text-xs text-[#16a34a]">◆</span>
-                <div>
-                  <strong className="text-neutral-900">Insetos em geral</strong>{" "}
-                  <span className="text-[10px] text-neutral-500">
-                    (baratas, formigas, aranhas, cupins etc.)
-                  </span>
-                </div>
-              </li>
-              <li className="flex items-start gap-1.5">
-                <span className="mt-0.5 text-xs text-[#16a34a]">◆</span>
-                <div>
-                  <strong className="text-neutral-900">Roedores</strong>{" "}
-                  <span className="text-[10px] text-neutral-500">
-                    (ratos e camundongos)
-                  </span>
-                </div>
-              </li>
-              <li className="flex items-start gap-1.5">
-                <span className="mt-0.5 text-xs text-[#16a34a]">◆</span>
-                <div>
-                  <strong className="text-neutral-900">Mosquitos</strong>{" "}
-                  <span className="text-[10px] text-neutral-500">
-                    (dengue, zika, chikungunya)
-                  </span>
-                </div>
-              </li>
-              <li className="flex items-start gap-1.5">
-                <span className="mt-0.5 text-xs text-[#16a34a]">◆</span>
-                <div>
-                  <strong className="text-neutral-900">Ácaros</strong>{" "}
-                  <span className="text-[10px] text-neutral-500">
-                    (alérgenos e poeira)
-                  </span>
-                </div>
-              </li>
-              <li className="flex items-start gap-1.5">
-                <span className="mt-0.5 text-xs text-[#16a34a]">◆</span>
-                <div>
-                  <strong className="text-neutral-900">Cupins</strong>{" "}
-                  <span className="text-[10px] text-neutral-500">
-                    (madeira e estruturas)
-                  </span>
-                </div>
-              </li>
+              {modelo.boxItens.map((item) => (
+                <li key={item.titulo} className="flex items-start gap-1.5">
+                  <span className="mt-0.5 text-xs text-[#16a34a]">◆</span>
+                  <div>
+                    <strong className="text-neutral-900">{item.titulo}</strong>{" "}
+                    <span className="text-[10px] text-neutral-500">{item.desc}</span>
+                  </div>
+                </li>
+              ))}
             </ul>
           </div>
-        </div>
-
-        {/* 4. SERVIÇOS OFERECIDOS */}
-        <div>
-          <div className="flex items-center gap-2 text-xs font-black tracking-wider text-neutral-900 uppercase">
-            <span className="text-sm text-[#16a34a]">●</span>
-            <span>SERVIÇOS OFERECIDOS</span>
-          </div>
-          <p className="mt-1 text-[11.5px] leading-relaxed text-neutral-600">
-            Dedetização, desratização, desinsetização, controle de pragas urbanas e sanitização de
-            ambientes. Utilizamos técnicas modernas e produtos regularizados, seguindo as normas de
-            segurança e meio ambiente.
-          </p>
         </div>
 
         {/* 5. TABELA DE ITENS / SERVIÇO */}
@@ -239,7 +263,7 @@ function PrintOSLayout({ doc, numFormatado, areaEstimada, gfAssinatura, cfg, isP
               <tr className="bg-[#4c5d54] text-[10.5px] font-black tracking-wider text-white uppercase">
                 <th className="w-12 px-3 py-2.5 text-center">ITEM</th>
                 <th className="px-4 py-2.5">DESCRIÇÃO DO SERVIÇO</th>
-                <th className="px-3 py-2.5">ÁREA ESTIMADA</th>
+                <th className="px-3 py-2.5">{modelo.colunaLocal}</th>
                 <th className="w-28 px-4 py-2.5 text-right">VALOR</th>
               </tr>
             </thead>
@@ -367,6 +391,10 @@ export default async function PrintDoc({ cfg, id, isPublic = false }) {
     ? doc.observacoes
     : "(03) MESES";
 
+  // Modelo do documento baseado nas flags (Dedetização, Caixa d'Água ou Unificado)
+  const flags = resolverFlagsServico(doc);
+  const propostaTema = getModeloDocumento(flags);
+
   return (
     <div className="sheet min-h-screen bg-neutral-100 text-[#111827] print:bg-white print:p-0">
       {/* Barra de Ações Superior (Não impressa) */}
@@ -404,6 +432,7 @@ export default async function PrintDoc({ cfg, id, isPublic = false }) {
             gfAssinatura={gfAssinatura}
             cfg={cfg}
             isPublic={isPublic}
+            modelo={propostaTema}
           />
         ) : (
           <article className="proposta-container font-sans text-[#1f2937]">
@@ -418,10 +447,10 @@ export default async function PrintDoc({ cfg, id, isPublic = false }) {
             </div>
             <div className="text-right">
               <div className="text-lg font-extrabold leading-tight text-white sm:text-xl">
-                Seu ambiente protegido,
+                {propostaTema.bannerLinha1}
               </div>
               <div className="text-lg font-extrabold leading-tight text-[#22c55e] sm:text-xl">
-                com qualidade e segurança.
+                {propostaTema.bannerLinha2}
               </div>
               <div className="mt-2 text-[9px] font-bold tracking-[0.2em] text-neutral-300 uppercase">
                 RESIDÊNCIAS • COMÉRCIOS • INDÚSTRIAS • EMPRESAS
@@ -448,10 +477,7 @@ export default async function PrintDoc({ cfg, id, isPublic = false }) {
                   Olá{doc.cliente_nome ? `, ${doc.cliente_nome}` : ""}!
                 </h2>
                 <p className="text-xs leading-relaxed text-neutral-600">
-                  A <strong>GF Dedetizações</strong> tem o prazer de apresentar esta proposta
-                  comercial, desenvolvida especialmente para atender às necessidades do seu ambiente.
-                  Nosso objetivo é oferecer soluções eficazes e seguras no controle de pragas,
-                  garantindo mais saúde, bem-estar e tranquilidade para sua família ou seu negócio.
+                  {propostaTema.apresentacao1}
                 </p>
                 <p className="text-xs leading-relaxed text-neutral-600">
                   Trabalhamos com profissionais qualificados, produtos regularizados e total
@@ -462,71 +488,33 @@ export default async function PrintDoc({ cfg, id, isPublic = false }) {
                 </p>
               </div>
 
-              {/* Coluna Direita: Box de Pragas Controladas */}
+              {/* Coluna Direita: Box de Destaque */}
               <div className="rounded border border-[#e2e8e5] bg-[#f4f7f5] p-3.5 md:col-span-5">
                 <h3 className="mb-2.5 text-[11px] font-black tracking-wider text-neutral-800 uppercase">
-                  PRINCIPAIS PRAGAS QUE CONTROLAMOS
+                  {propostaTema.boxTitulo}
                 </h3>
                 <ul className="space-y-2 text-[11px]">
-                  <li className="flex items-start gap-1.5">
-                    <span className="mt-0.5 text-xs text-[#16a34a]">◆</span>
-                    <div>
-                      <strong className="text-neutral-900">Insetos em geral</strong>{" "}
-                      <span className="text-[10px] text-neutral-500">
-                        (baratas, formigas, aranhas, cupins etc.)
-                      </span>
-                    </div>
-                  </li>
-                  <li className="flex items-start gap-1.5">
-                    <span className="mt-0.5 text-xs text-[#16a34a]">◆</span>
-                    <div>
-                      <strong className="text-neutral-900">Roedores</strong>{" "}
-                      <span className="text-[10px] text-neutral-500">
-                        (ratos e camundongos)
-                      </span>
-                    </div>
-                  </li>
-                  <li className="flex items-start gap-1.5">
-                    <span className="mt-0.5 text-xs text-[#16a34a]">◆</span>
-                    <div>
-                      <strong className="text-neutral-900">Mosquitos</strong>{" "}
-                      <span className="text-[10px] text-neutral-500">
-                        (dengue, zika, chikungunya)
-                      </span>
-                    </div>
-                  </li>
-                  <li className="flex items-start gap-1.5">
-                    <span className="mt-0.5 text-xs text-[#16a34a]">◆</span>
-                    <div>
-                      <strong className="text-neutral-900">Ácaros</strong>{" "}
-                      <span className="text-[10px] text-neutral-500">
-                        (alérgenos e poeira)
-                      </span>
-                    </div>
-                  </li>
-                  <li className="flex items-start gap-1.5">
-                    <span className="mt-0.5 text-xs text-[#16a34a]">◆</span>
-                    <div>
-                      <strong className="text-neutral-900">Cupins</strong>{" "}
-                      <span className="text-[10px] text-neutral-500">
-                        (madeira e estruturas)
-                      </span>
-                    </div>
-                  </li>
+                  {propostaTema.boxItens.map((item) => (
+                    <li key={item.titulo} className="flex items-start gap-1.5">
+                      <span className="mt-0.5 text-xs text-[#16a34a]">◆</span>
+                      <div>
+                        <strong className="text-neutral-900">{item.titulo}</strong>{" "}
+                        <span className="text-[10px] text-neutral-500">{item.desc}</span>
+                      </div>
+                    </li>
+                  ))}
                 </ul>
               </div>
             </div>
 
-            {/* 4. SERVIÇOS OFERECIDOS */}
+            {/* 4. SERVIÇOS OFERECIDOS / SOBRE O SERVIÇO */}
             <div className="mt-6">
               <div className="flex items-center gap-2 text-xs font-black tracking-wider text-neutral-900 uppercase">
                 <span className="text-sm text-[#16a34a]">●</span>
-                <span>SERVIÇOS OFERECIDOS</span>
+                <span>{propostaTema.sobreTitulo}</span>
               </div>
               <p className="mt-1 text-[11.5px] leading-relaxed text-neutral-600">
-                Dedetização, desratização, desinsetização, controle de pragas urbanas e sanitização de
-                ambientes. Utilizamos técnicas modernas e produtos regularizados, seguindo as normas de
-                segurança e meio ambiente.
+                {propostaTema.sobreTexto}
               </p>
             </div>
 
@@ -537,7 +525,7 @@ export default async function PrintDoc({ cfg, id, isPublic = false }) {
                   <tr className="bg-[#4c5d54] text-[10.5px] font-black tracking-wider text-white uppercase">
                     <th className="w-12 px-3 py-2.5 text-center">ITEM</th>
                     <th className="px-4 py-2.5">DESCRIÇÃO DO SERVIÇO</th>
-                    <th className="px-3 py-2.5">ÁREA ESTIMADA</th>
+                    <th className="px-3 py-2.5">{propostaTema.colunaLocal}</th>
                     <th className="w-28 px-4 py-2.5 text-right">VALOR</th>
                   </tr>
                 </thead>
@@ -576,7 +564,7 @@ export default async function PrintDoc({ cfg, id, isPublic = false }) {
             </div>
 
             <div className="mt-2 space-y-0.5 text-[9.5px] text-neutral-500">
-              <p>* O valor final poderá ser ajustado conforme a metragem, o tipo de praga e a necessidade específica de cada ambiente.</p>
+              <p>{propostaTema.notaTabela}</p>
               <p>* Após a vistoria técnica, será emitido o orçamento definitivo.</p>
             </div>
 
